@@ -1,6 +1,9 @@
 package repo
 
 import (
+	"errors"
+	"net/mail"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -11,16 +14,30 @@ type User struct {
 	PasswordHash string `json:"-"`
 }
 
-func NewUser(name, email, passord string) (*User, error) {
+func NewUser(name, email, password string) (*User, error) {
 	u := User{}
 
+	if len([]rune(name)) < 3 {
+		return nil, errors.New("name must be at least 3 charecters long")
+	}
+
+	if len([]rune(password)) < 8 {
+		return nil, errors.New("password must be at least 8 characters long")
+	}
+
+	_, err := mail.ParseAddress(email)
+	if err != nil {
+		return nil, errors.New("bad email")
+	}
+
 	u.Name = name
-	err := u.SetPassword(passord)
+	u.Email = email
+	err = u.SetPassword(password)
 	if err != nil {
 		return nil, err
 	}
 
-	return &u, nil	
+	return &u, nil
 }
 
 func (u *User) SetPassword(password string) error {

@@ -1,0 +1,20 @@
+<nav class="navbar navbar-expand-lg bg-dark bg-gradient border-button border-body" data-bs-theme="dark">
+	<div class="container-fluid">
+		<span class="navbar-brand">DEPOT</span>
+		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+			aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+		<div class="colapse navbar-collapse" id="navbarSupportedContent">
+			<ul class="navbar-nav me-auto mb-2 mb-lg-0">
+				<li class="nav-item">
+					<a href="{{url_for('login.index')}}" class="nav-link active">Главная</a>
+				</li>
+			</ul>
+			<span class="navbar-text mx-2">Вход не выполнен</span>
+			<button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#loginModal">
+				Войти
+			</button>
+		</div>
+	</div>
+</nav>

@@ -1,0 +1,15 @@
+[project]
+name = "dep-flask-front"
+version = "0.1.0"
+description = "Flask fronted for depot project"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "flask>=3.1.0",
+    "flask-wtf>=1.2.2",
+    "requests>=2.32.3",
+]
+
+[tool.pyright]
+venvPat = "."
+venv = ".venv"

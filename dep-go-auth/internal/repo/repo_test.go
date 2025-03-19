@@ -4,7 +4,7 @@ import "testing"
 
 func TestNewUser(t *testing.T) {
 	username := "Test"
-	pass := "123"
+	pass := "123123123"
 	email := "test@test.com"
 
 	u, err := NewUser(username, email, pass)
@@ -23,33 +23,31 @@ func TestNewUser(t *testing.T) {
 
 func TestRepoAddUser(t *testing.T) {
 	name := "test"
-	pass := "123"
+	pass := "123123123"
 	email := "test@test.com"
 	u, _ := NewUser(name, email, pass)
 
-	r := NewRepo("test.db")
-	defer r.Close()
-	defer r.db.Exec(DropUsers)
+	userRepo := NewUserRepo("test.db")
+	defer userRepo.Close(true)
 
-	_, err := r.UserAdd(u)
+	_, err := userRepo.Add(u)
 	if err != nil {
-		t.Error("Error Repo.UserAdd:", err)
+		t.Error("Error UserRepo.Add:", err)
 	}
 }
 
 func TestRepoUserGetByName(t *testing.T) {
 	name := "test"
-	pass := "123"
+	pass := "123123123"
 	email := "test@test.com"
 	u, _ := NewUser(name, email, pass)
 
-	r := NewRepo("test.db")
-	defer r.Close()
-	defer r.db.Exec(DropUsers)
+	userRepo := NewUserRepo("test.db")
+	defer userRepo.Close(true)
 
-	r.UserAdd(u)
+	userRepo.Add(u)
 
-	getUser, err := r.UserGetByName(u.Name)
+	getUser, err := userRepo.GetByName(u.Name)
 	if err != nil {
 		t.Error("Error GetUserByName:", err)
 	}
@@ -60,24 +58,22 @@ func TestRepoUserGetByName(t *testing.T) {
 }
 
 func TestRepoUserGetAll(t *testing.T) {
-	r := NewRepo("test.db")
-	defer r.Close()
-	defer r.db.Exec(DropUsers)
+	userRepo := NewUserRepo("test.db")
+	defer userRepo.Close(true)
 
-	u1, _ := NewUser("Test1", "test@test.com", "123")
-	u2, _ := NewUser("Test2", "test2@test.com", "123")
-	u3, _ := NewUser("Test3", "t@t.com", "321")
-	r.UserAdd(u1)
-	r.UserAdd(u2)
-	r.UserAdd(u3)
+	u1, _ := NewUser("Test1", "test@test.com", "123123123")
+	u2, _ := NewUser("Test2", "test2@t.com", "123123123j")
+	u3, _ := NewUser("Test3", "t@t.com", "32112312312")
+	userRepo.Add(u1)
+	userRepo.Add(u2)
+	userRepo.Add(u3)
 
-	users, err := r.UserGetAll()
+	users, err := userRepo.GetAll()
 	if err != nil {
 		t.Error("Error Repo.UserGetAll:", err)
 	}
 	if len(users) != 3 {
 		t.Error("Error incorrect count users in result")
 	}
-	t.Log("UserGetAll Tested")
 	t.Logf("Result for 3 test users: %+v", users)
 }

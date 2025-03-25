@@ -2,7 +2,7 @@ FROM docker.io/python
 
 WORKDIR /app
 COPY . ./
-RUN pip install uv && uv sync
+RUN pip install -r requirements.txt 
 
-EXPOSE 5000 
-CMD ["uv", "run", "flask", "run", "--debug"]
+EXPOSE 8888 
+CMD ["gunicorn", "-b", "0.0.0.0:8888", "dep:app"]

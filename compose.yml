@@ -2,4 +2,4 @@ services:
   flask-front:
     build: ./dep-flask-front/
     ports:
-      - 8888:8888
+      - 5000:5000

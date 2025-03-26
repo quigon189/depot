@@ -1,8 +1,9 @@
-FROM docker.io/python
+FROM docker.io/python:3.11-slim
 
 WORKDIR /app
 COPY . ./
-RUN pip install -r requirements.txt 
+RUN pip install --upgrade pip && pip install -r requirements.txt 
 
-EXPOSE 8888 
-CMD ["gunicorn", "-b", "0.0.0.0:8888", "dep:app"]
+ENV PATH="/app/.venv/bin:$PATH"
+EXPOSE 5000
+CMD ["flask", "run"]

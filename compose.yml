@@ -3,3 +3,8 @@ services:
     build: ./dep-flask-front/
     ports:
       - 5000:5000
+
+  go-auth:
+    build: ./dep-go-auth/
+    ports:
+      - 18080:8080

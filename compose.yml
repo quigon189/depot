@@ -1,10 +1,16 @@
 services:
   flask-front:
     build: ./dep-flask-front/
+    env_file:
+      - ./.env
+    environment:
+      - AUTH=go-auth:8080
     ports:
       - 5000:5000
 
   go-auth:
     build: ./dep-go-auth/
+    env_file:
+      - ./.env
     ports:
       - 18080:8080

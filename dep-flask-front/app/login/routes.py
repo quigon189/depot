@@ -3,8 +3,9 @@ import requests
 
 from app.login import login_bp
 from app.login.forms import LoginForm
+from app import app
 
-BACKEND = 'http://localhost:18080'
+BACKEND = f'http://{app.config["AUTH"]}'
 
 @login_bp.route('/')
 @login_bp.route('/index')

@@ -1,6 +1,8 @@
 services:
   flask-front:
     build: ./dep-flask-front/
+    volumes:
+      - ./dep-flask-front/app:/app/app
     env_file:
       - ./.env
     environment:

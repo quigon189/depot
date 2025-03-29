@@ -12,9 +12,7 @@
 				</li>
 			</ul>
 			<span class="navbar-text mx-2">Вход не выполнен</span>
-			<button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#loginModal">
-				Войти
-			</button>
+			<a class="btn btn-success" href="{{ url_for('login.login')}}" role="button">Войти</a>
 		</div>
 	</div>
 </nav>

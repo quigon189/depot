@@ -1,4 +1,4 @@
-from flask import render_template, flash
+from flask import redirect, render_template, flash, url_for
 import requests
 
 from app.login import login_bp
@@ -26,6 +26,7 @@ def login():
 
         if resp.status_code == 200:
             flash(f"Авторизация прошла успешно. Token: {resp.json()}")
+            return redirect(url_for("login.index"))
 
         else:
             flash(f"Ошибка авторизации {resp.status_code}: {resp.json()}")

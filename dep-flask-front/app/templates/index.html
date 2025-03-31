@@ -1,4 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Здравствуйте!</h1>
+	{% if g.user %}
+		<h1>Здравствуйте, {{ g.user['user_name']}}!</h1>
+	{% else %}
+		<h1>Здравствуйте!</h1>
+	{% endif %}
 {% endblock %}

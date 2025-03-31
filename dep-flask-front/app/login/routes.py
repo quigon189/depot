@@ -1,35 +1,55 @@
-from flask import redirect, render_template, flash, url_for
+from flask import make_response, redirect, render_template, flash, url_for
 import requests
 
 from app.login import login_bp
 from app.login.forms import LoginForm
 from app import app
+from app.require import jwt_required
 
 BACKEND = f'http://{app.config["AUTH"]}'
+
 
 @login_bp.route('/')
 @login_bp.route('/index')
 def index():
     return render_template('index.html')
 
+
+@login_bp.route('/user')
+@jwt_required
+def user():
+    return render_template('index.html')
+
+
+@login_bp.route('/logout')
+@jwt_required
+def logout():
+    resp = make_response(redirect(url_for('login.index')))
+    resp.delete_cookie("auth_token")
+    return resp
+
+
 @login_bp.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     if form.validate_on_submit():
         resp = requests.post(
-                f"{BACKEND}/user/login",
-                json={
-                    "name":form.username.data,
-                    "password":form.password.data
-                    }
-                )
+            f"{BACKEND}/user/login",
+            json={
+                "name": form.username.data,
+                "password": form.password.data
+            }
+        )
 
         if resp.status_code == 200:
-            flash(f"Авторизация прошла успешно. Token: {resp.json()}")
-            return redirect(url_for("login.index"))
-
+            response = make_response(redirect(url_for("login.user")))
+            response.set_cookie(
+                "auth_token", resp.json()["token"],
+                httponly=True,
+                samesite='Lax'
+            )
+            return response
         else:
             flash(f"Ошибка авторизации {resp.status_code}: {resp.json()}")
 
     return render_template('login.html', form=form)
-

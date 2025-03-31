@@ -8,3 +8,7 @@ dev_start: #Старт окружения разработчика
 dev_stop:
 	podman-compose down
 	podman image prune -f
+
+dev_update:
+	podman rmi localhost/depot_flask-front:latest localhost/depot_go-auth:latest
+	podman-compose build

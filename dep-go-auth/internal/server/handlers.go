@@ -101,7 +101,7 @@ func (s *server) LoginUser(w http.ResponseWriter, r *http.Request) {
 		Token string `json:"token"`
 	}	
 
-	result.Token, err = s.auth.GenerateToken(user.ID) 
+	result.Token, err = s.auth.GenerateToken(user) 
 	if err != nil {
 		error := fmt.Sprintf("{\"error\":\"%s\"}", err.Error())
 		http.Error(w, error, http.StatusInternalServerError)

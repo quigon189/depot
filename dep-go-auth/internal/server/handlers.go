@@ -4,7 +4,10 @@ import (
 	"db-go-auth/internal/repo"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+
+	"github.com/felixge/httpsnoop"
 )
 
 func (s *server) UserAdd(w http.ResponseWriter, r *http.Request) {
@@ -97,11 +100,11 @@ func (s *server) LoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var result struct{
+	var result struct {
 		Token string `json:"token"`
-	}	
+	}
 
-	result.Token, err = s.auth.GenerateToken(user) 
+	result.Token, err = s.auth.GenerateToken(user)
 	if err != nil {
 		error := fmt.Sprintf("{\"error\":\"%s\"}", err.Error())
 		http.Error(w, error, http.StatusInternalServerError)
@@ -109,4 +112,14 @@ func (s *server) LoginUser(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(result)
+}
+
+func (s *server) logHendler(h http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		m := httpsnoop.CaptureMetrics(h, w, r)
+
+		log.Printf("Request: %s %s remoteAddr: %s StatusCode: %v", r.Method, r.URL, r.RemoteAddr, m.Code)
+	}
+
+	return http.HandlerFunc(fn)
 }

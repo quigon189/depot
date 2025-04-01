@@ -10,23 +10,21 @@ import (
 type server struct {
 	userRepo repo.Repo
 	auth     auth.Auth
-	config   struct {
-		port      string
-	}
 }
 
-func StartServer(path, port, secretKey string) error {
+func StartServer(path, host, port, secretKey string) error {
 	s := server{
 		userRepo: repo.NewUserRepo(path),
 	}
-	s.config.port = port
 
 	s.auth.SecretKey = []byte(secretKey)
 
-	http.HandleFunc("/user/add", s.UserAdd)
-	//http.HandleFunc("/user/all", s.UserGetAll)
-	http.HandleFunc("/user/login", s.LoginUser)
+	mux := http.NewServeMux()
 
-	log.Printf("Starting server on port %s", s.config.port)
-	return http.ListenAndServe(":"+s.config.port, nil)
+	mux.HandleFunc("/user/add", s.UserAdd)
+	//mux.HandleFunc("/user/all", s.UserGetAll)
+	mux.HandleFunc("/user/login", s.LoginUser)
+
+	log.Printf("Starting server on port %s", port)
+	return http.ListenAndServe(host+":"+port, s.logHendler(mux))
 }

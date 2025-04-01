@@ -17,6 +17,7 @@ WORKDIR /app
 
 #RUN apk --no-cache add libc6-compat libgcc libstdc++
 COPY --from=builder /app/server . 
+COPY --from=builder /app/config.yml .
 
 #ENV SECRET_KEY=kuku-epta
 EXPOSE 8080

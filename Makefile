@@ -10,5 +10,5 @@ dev_stop:
 	podman image prune -f
 
 dev_update:
-	podman rmi localhost/depot_flask-front:latest localhost/depot_go-auth:latest
+	podman rmi localhost/depot_flask-front:latest localhost/depot_go-auth:latest || true
 	podman-compose build

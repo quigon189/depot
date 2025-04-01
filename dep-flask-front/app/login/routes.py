@@ -1,4 +1,4 @@
-from flask import make_response, redirect, render_template, flash, url_for
+from flask import g, make_response, redirect, render_template, flash, url_for
 import requests
 
 from app.login import login_bp
@@ -9,28 +9,31 @@ from app.require import jwt_required
 BACKEND = f'http://{app.config["AUTH"]}'
 
 
-@login_bp.route('/')
-@login_bp.route('/index')
-def index():
-    return render_template('index.html')
-
-
-@login_bp.route('/user')
-@jwt_required
-def user():
-    return render_template('index.html')
-
+# @login_bp.route('/')
+# @login_bp.route('/index')
+# def index():
+#     return render_template('index.html')
+#
+#
+# @login_bp.route('/user')
+# @jwt_required
+# def user():
+#     return render_template('index.html')
+#
 
 @login_bp.route('/logout')
 @jwt_required
 def logout():
-    resp = make_response(redirect(url_for('login.index')))
+    resp = make_response(redirect(url_for('main.index')))
     resp.delete_cookie("auth_token")
     return resp
 
 
 @login_bp.route('/login', methods=['GET', 'POST'])
 def login():
+    if "user" in g:
+        return redirect(url_for('main.index'))
+
     form = LoginForm()
     if form.validate_on_submit():
         resp = requests.post(
@@ -42,7 +45,7 @@ def login():
         )
 
         if resp.status_code == 200:
-            response = make_response(redirect(url_for("login.user")))
+            response = make_response(redirect(url_for("main.user")))
             response.set_cookie(
                 "auth_token", resp.json()["token"],
                 httponly=True,

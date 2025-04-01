@@ -1,0 +1,15 @@
+{% import 'macros/view.html' as view %}
+{% extends "base.html" %}
+{% block content %}
+
+	{% if header %}
+		<h2>{{header}}</h2>
+	{% else %}
+		<h2>Таблица</h2>
+	{% endif %}
+
+	{% if records %}
+		{{ view.table(records) }}
+	{% endif %}
+
+{% endblock %}

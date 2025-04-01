@@ -5,12 +5,25 @@
 			aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
 			<span class="navbar-toggler-icon"></span>
 		</button>
-		{% if g.user %}
+		{% if 'user' in g %}
 		<div class="colapse navbar-collapse" id="navbarSupportedContent">
 			<ul class="navbar-nav me-auto mb-2 mb-lg-0">
 				<li class="nav-item">
-					<a href="{{url_for('login.index') }}" class="nav-link active">Главная</a>
+					<a href="{{url_for('main.index') }}" class="nav-link">Главная</a>
 				</li>
+				<li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          	Просмотр  
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{{ url_for('main.specializations') }}">Специализации</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('main.groups') }}">Группы</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('main.students') }}">Студенты</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('main.disciplines') }}">Дисциплины</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('main.teachers') }}">Преподаватели</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('main.audience') }}">Аудитории</a></li>
+          </ul>
+        </li>
 			</ul>
 			<span class="navbar-text mx-2">{{g.user["user_name"]}}</span>
 			<a class="btn btn-danger" href="{{ url_for('login.logout') }}" role="button">Выйти</a>
@@ -19,7 +32,7 @@
 		<div class="colapse navbar-collapse" id="navbarSupportedContent">
 			<ul class="navbar-nav me-auto mb-2 mb-lg-0">
 				<li class="nav-item">
-					<a href="{{url_for('login.index') }}" class="nav-link active">Главная</a>
+					<a href="{{url_for('main.index') }}" class="nav-link">Главная</a>
 				</li>
 			</ul>
 			<span class="navbar-text mx-2">Вход не выполнен</span>

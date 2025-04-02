@@ -6,13 +6,34 @@ services:
     env_file:
       - ./.env
     environment:
-      - AUTH=go-auth:8080
+      - AUTH=go-auth:8080/login
     ports:
       - 5000:5000
 
   go-auth:
     build: ./dep-go-auth/
+    restart: always
     env_file:
       - ./.env
     ports:
       - 18080:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+        restart: true
+
+  postgres:
+    image: docker.io/postgres:alpine
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s

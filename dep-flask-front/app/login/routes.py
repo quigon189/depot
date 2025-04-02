@@ -9,18 +9,6 @@ from app.require import jwt_required
 BACKEND = f'http://{app.config["AUTH"]}'
 
 
-# @login_bp.route('/')
-# @login_bp.route('/index')
-# def index():
-#     return render_template('index.html')
-#
-#
-# @login_bp.route('/user')
-# @jwt_required
-# def user():
-#     return render_template('index.html')
-#
-
 @login_bp.route('/logout')
 @jwt_required
 def logout():
@@ -37,7 +25,7 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         resp = requests.post(
-            f"{BACKEND}/user/login",
+            f"{BACKEND}",
             json={
                 "name": form.username.data,
                 "password": form.password.data

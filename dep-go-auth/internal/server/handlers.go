@@ -66,17 +66,6 @@ func (s *server) UserAdd(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
-func (s *server) UserGetAll(w http.ResponseWriter, r *http.Request) {
-	users, err := s.userRepo.GetAll()
-	if err != nil {
-		error := fmt.Sprintf("{\"error\":\"%s\"}", err.Error())
-		http.Error(w, error, http.StatusInternalServerError)
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(users)
-}
-
 func (s *server) LoginUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		error := fmt.Sprintf("{\"error\":\"%s\"}", "Invalid method")

@@ -14,10 +14,5 @@ func main() {
 		log.Fatalf("SECRET_KEY is not set in config file")
 	}
 
-	log.Fatal(server.StartServer(
-		"app.db",
-		cfg.Server.Host,
-		cfg.Server.Port,
-		cfg.Server.Secret,
-	))
+	log.Fatal(server.StartServer(cfg))
 }

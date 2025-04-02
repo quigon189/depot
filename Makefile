@@ -1,14 +1,14 @@
 ADDR := $(shell hostname -I | tr -d " ")
 
-dev_start: #Старт окружения разработчика
+dev-start: #Старт окружения разработчика
 	podman-compose up -d
-	http :18080/user/add name=laa email=laa@gmail.com password=ghjgecr123
+	http :18080/add name=laa email=laa@gmail.com password=ghjgecr123
 	@echo "http://$(ADDR):5000"
 
-dev_stop:
+dev-stop:
 	podman-compose down
 	podman image prune -f
 
-dev_update:
+dev-update:
 	podman rmi localhost/depot_flask-front:latest localhost/depot_go-auth:latest || true
 	podman-compose build

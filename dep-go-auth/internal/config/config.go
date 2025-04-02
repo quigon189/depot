@@ -13,8 +13,25 @@ type Config struct {
 	Server struct {
 		Host   string `yaml:"host"`
 		Port   string `yaml:"port"`
-		Secret string `yaml:"secret_key"`
+		Secret string `yaml:"-"` 
 	} `yaml:"server"`
+
+	DB struct {
+		Type string `yaml:"type"`
+
+		SQLite struct {
+			Path string `yaml:"path"`
+		} `yaml:"sqlite"`
+
+		Postgres struct {
+			User string `yaml:"user"`
+			Password string `yaml:"password"`
+			DBname string `yaml:"dbname"`
+			Host string `yaml:"host"`
+			Port string `yaml:"port"`
+			SSLmode string `yaml:"sslmode"`
+		}
+	}
 }
 
 func Fetch() *Config {
@@ -35,6 +52,12 @@ func Fetch() *Config {
 	var cfg Config
 	if err = decoder.Decode(&cfg); err != nil {
 		log.Fatalf("Decode error with config file: %s", err.Error())
+	}
+
+	var ok bool
+	cfg.Server.Secret, ok = os.LookupEnv("SECRET_KEY")
+	if  !ok {
+		log.Fatalf("Env SECRET_KEY required")
 	}
 
 	return &cfg

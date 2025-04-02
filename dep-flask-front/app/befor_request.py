@@ -12,5 +12,5 @@ def before_request():
             g.user = payload
             return
         resp = make_response(redirect(url_for('login.login')))
-        resp.delete_cookie("Authorization")
+        resp.delete_cookie("auth_token")
         return resp

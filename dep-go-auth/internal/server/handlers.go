@@ -29,12 +29,6 @@ func (s *server) UserAdd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// if len([]rune(request.Password)) < 8 {
-	// 	error := fmt.Sprintf("{\"error\":\"%s\"}", "Password must be at least 8 characters long")
-	// 	http.Error(w, error, http.StatusBadRequest)
-	// 	return
-	// }
-
 	user, err := repo.NewUser(
 		request.Name,
 		request.Email,
@@ -62,6 +56,7 @@ func (s *server) UserAdd(w http.ResponseWriter, r *http.Request) {
 
 	user.ID = id
 
+	w.Header().Add("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(user)
 }
@@ -99,6 +94,7 @@ func (s *server) LoginUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, error, http.StatusInternalServerError)
 	}
 
+	w.Header().Add("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(result)
 }

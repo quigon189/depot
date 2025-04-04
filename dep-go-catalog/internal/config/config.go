@@ -1,10 +1,7 @@
 package config
 
 import (
-	"bufio"
-	"bytes"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -29,34 +26,30 @@ type Config struct {
 	} `yaml:"database"`
 }
 
-
 func Fetch() *Config {
 	path := configPath()
 
-	file, err := os.Open(path)
+	cfgBytes, err := os.ReadFile(path)
 	if err != nil {
-		log.Fatalf("Error open config file, path=%s: %s", path, err.Error())
-	}
-	defer file.Close()
-
-	wr := bytes.Buffer{}
-	sc := bufio.NewScanner(file)
-	for sc.Scan() {
-		wr.WriteString(sc.Text())
+		log.Fatalf("Error reading config file path=%s: %s", path, err.Error())
 	}
 
-	//decoder := yaml.NewDecoder(file)
+	cfgLines := strings.Split(string(cfgBytes), "\n")
+	for n, line := range cfgLines {
+		envIdx := strings.Index(line, "$")
+		if envIdx > 0 {
+			env := strings.Split(line[envIdx+1:], " ")[0]
+			cfgLines[n] = line[:envIdx] + os.Getenv(env) 
+			log.Printf("%v: %s\t%s", n, line, env)
+		}
+	}
 
-	cfgStr := wr.String()
-
-	cfgLines := strings.Split(cfgStr, "\n")
-	fmt.Println(cfgLines)
+	log.Println(cfgLines)
 
 	var cfg Config
-	yaml.Unmarshal([]byte(cfgStr), &cfg)
-	// if err = decoder.Decode(&cfg); err != nil {
-	// 	log.Fatalf("Error decode %s file: %s", path, err.Error())
-	// }
+	if err = yaml.Unmarshal([]byte(strings.Join(cfgLines, "\n")), &cfg); err != nil {
+		log.Fatalf("Error unmarshal %s file: %s", path, err.Error())
+	}
 
 	return &cfg
 }
@@ -69,15 +62,15 @@ func configPath() string {
 
 	if path == "" {
 		var ok bool
-		path, ok = os.LookupEnv("CATALOG_CONFIG")	
+		path, ok = os.LookupEnv("CATALOG_CONFIG")
 		if !ok {
 			path = "./config.yml"
 		}
 	}
 
 	stat, err := os.Stat(path)
-	if err!=nil {
-		log.Fatalf("Error get stat path=%s: %s",path,err.Error())
+	if err != nil {
+		log.Fatalf("Error get stat path=%s: %s", path, err.Error())
 	}
 
 	if stat.IsDir() {

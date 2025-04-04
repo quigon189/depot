@@ -1,9 +1,13 @@
 package config
 
 import (
+	"bufio"
+	"bytes"
 	"flag"
+	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -35,12 +39,24 @@ func Fetch() *Config {
 	}
 	defer file.Close()
 
-	decoder := yaml.NewDecoder(file)
+	wr := bytes.Buffer{}
+	sc := bufio.NewScanner(file)
+	for sc.Scan() {
+		wr.WriteString(sc.Text())
+	}
+
+	//decoder := yaml.NewDecoder(file)
+
+	cfgStr := wr.String()
+
+	cfgLines := strings.Split(cfgStr, "\n")
+	fmt.Println(cfgLines)
 
 	var cfg Config
-	if err = decoder.Decode(&cfg); err != nil {
-		log.Fatalf("Error decode %s file: %s", path, err.Error())
-	}
+	yaml.Unmarshal([]byte(cfgStr), &cfg)
+	// if err = decoder.Decode(&cfg); err != nil {
+	// 	log.Fatalf("Error decode %s file: %s", path, err.Error())
+	// }
 
 	return &cfg
 }

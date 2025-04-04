@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -26,8 +27,34 @@ type Config struct {
 	} `yaml:"database"`
 }
 
-func (cfg *Config) Fetch() {
-	path := configPath()
+type YMLCfg struct {
+	Flag string
+	Env  string
+	Def  string
+}
+
+func New(flag, env, def string) *YMLCfg {
+	var cfg YMLCfg
+	if flag == "" {
+		flag = "config"
+	}
+
+	if env == "" {
+		env = "CONFIG_PATH"
+	}
+
+	if def == "" {
+		def = "./config.yml"
+	}
+	cfg.Flag = flag
+	cfg.Env = env
+	cfg.Def = def
+
+	return &cfg
+}
+
+func (c *YMLCfg) Fetch(cfg any) {
+	path := c.configPath()
 
 	cfgBytes, err := os.ReadFile(path)
 	if err != nil {
@@ -39,12 +66,9 @@ func (cfg *Config) Fetch() {
 		envIdx := strings.Index(line, "$")
 		if envIdx > 0 {
 			env := strings.Split(line[envIdx+1:], " ")[0]
-			cfgLines[n] = line[:envIdx] + os.Getenv(env) 
-			log.Printf("%v: %s\t%s", n, line, env)
+			cfgLines[n] = line[:envIdx] + os.Getenv(env)
 		}
 	}
-
-	log.Println(cfgLines)
 
 	if err = yaml.Unmarshal([]byte(strings.Join(cfgLines, "\n")), cfg); err != nil {
 		log.Fatalf("Error unmarshal %s file: %s", path, err.Error())
@@ -52,17 +76,28 @@ func (cfg *Config) Fetch() {
 
 }
 
-func configPath() string {
+func (cfg *YMLCfg) configPath() string {
+	if cfg.Flag == "" {
+		cfg.Flag = "config"
+	}
+
+	if cfg.Env == "" {
+		cfg.Env = "CONFIG_PATH"
+	}
+
+	if cfg.Def == "" {
+		cfg.Def = "./config.yml"
+	}
 	var path string
 
-	flag.StringVar(&path, "config", "", "path to config.yaml file (default ./config.yml)")
+	flag.StringVar(&path, cfg.Flag, "", fmt.Sprintf("path to config.yaml file (default %s)", cfg.Def))
 	flag.Parse()
 
 	if path == "" {
 		var ok bool
-		path, ok = os.LookupEnv("CATALOG_CONFIG")
+		path, ok = os.LookupEnv(cfg.Env)
 		if !ok {
-			path = "./config.yml"
+			path = cfg.Def 
 		}
 	}
 

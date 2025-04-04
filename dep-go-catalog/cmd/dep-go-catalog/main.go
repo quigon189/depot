@@ -6,7 +6,9 @@ import (
 )
 
 func main() {
-	cfg := config.Fetch()
+	var cfg config.Config
+	cfg.Fetch()
+
 	log.Printf("%+v", cfg)
 	log.Fatalf("server %s:%s stoped", cfg.Server.Host, cfg.Server.Port)
 }

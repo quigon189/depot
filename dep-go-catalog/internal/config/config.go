@@ -26,7 +26,7 @@ type Config struct {
 	} `yaml:"database"`
 }
 
-func Fetch() *Config {
+func (cfg *Config) Fetch() {
 	path := configPath()
 
 	cfgBytes, err := os.ReadFile(path)
@@ -46,12 +46,10 @@ func Fetch() *Config {
 
 	log.Println(cfgLines)
 
-	var cfg Config
-	if err = yaml.Unmarshal([]byte(strings.Join(cfgLines, "\n")), &cfg); err != nil {
+	if err = yaml.Unmarshal([]byte(strings.Join(cfgLines, "\n")), cfg); err != nil {
 		log.Fatalf("Error unmarshal %s file: %s", path, err.Error())
 	}
 
-	return &cfg
 }
 
 func configPath() string {

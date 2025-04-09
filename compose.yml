@@ -37,3 +37,19 @@ services:
       retries: 5
       start_period: 30s
       timeout: 10s
+      
+  swagger-editor:
+    image: docker.io/swaggerapi/swagger-editor
+    restart: always
+    ports:
+      - 8080:8080
+    volumes:
+      - ./api:/data
+      
+  swagger-ui:
+    image: docker.io/swaggerapi/swagger-ui
+    restart: always
+    ports:
+      - 8081:8080
+    volumes:
+      - ./api:/data

@@ -11,6 +11,7 @@ import (
 )
 
 func (s *server) UserAdd(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "application/json; charset=utf-8")
 	if r.Method != http.MethodPost {
 		error := fmt.Sprintf("{\"error\":\"%s\"}", "Invalid method")
 		http.Error(w, error, http.StatusMethodNotAllowed)
@@ -56,12 +57,12 @@ func (s *server) UserAdd(w http.ResponseWriter, r *http.Request) {
 
 	user.ID = id
 
-	w.Header().Add("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(user)
 }
 
 func (s *server) LoginUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "application/json; charset=utf-8")
 	if r.Method != http.MethodPost {
 		error := fmt.Sprintf("{\"error\":\"%s\"}", "Invalid method")
 		http.Error(w, error, http.StatusMethodNotAllowed)
@@ -80,7 +81,7 @@ func (s *server) LoginUser(w http.ResponseWriter, r *http.Request) {
 
 	user, err := s.userRepo.GetByName(request.Name)
 	if err != nil || !user.CheckPassword(request.Password) {
-		http.Error(w, "{\"error\":\"Invalid login or password\"}", http.StatusUnauthorized)
+		http.Error(w, "{\"error\":\"Invalid login or password\"}", http.StatusBadRequest)
 		return
 	}
 
@@ -94,7 +95,6 @@ func (s *server) LoginUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, error, http.StatusInternalServerError)
 	}
 
-	w.Header().Add("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(result)
 }

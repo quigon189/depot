@@ -1,9 +1,11 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type BaseModel struct {
-	ID        uint
-	CreatedAt time.Time
+	ID        uint      `gorm:"primaryKey"`
+	CreatedAt time.Time `gorm:"autoCreateTime"`
 	DeletedAt time.Time
 }

@@ -2,20 +2,25 @@ package models
 
 import "time"
 
-type SpecModel struct {
+type Specialty struct {
 	BaseModel
-	Code string
-	Name string
+	Code      string  `gorm:"size:8"`
+	Name      string  `gorm:"size:100"`
+	ShortName string  `gorm:"size:3"`
+	Groups    []Group `gorm:"foreignKey:SpecID"`
 }
 
-type GroupModel struct {
+type Group struct {
 	BaseModel
 	Number         uint
 	Year           uint
 	ClassTeacherID uint
+	SpecID         uint
+	Students       []Student `gorm:"foreignKey:GroupID"`
+	Disciplines 
 }
 
-type StudentModel struct {
+type Student struct {
 	BaseModel
 	FullName    string
 	GroupID     uint
@@ -23,14 +28,14 @@ type StudentModel struct {
 	PhoneNumber string
 }
 
-type TeacherModel struct {
+type Teacher struct {
 	BaseModel
 	FullName    string
 	Birthdate   time.Time
 	PhoneNumber string
 }
 
-type DisciplineModel struct {
+type Discipline struct {
 	BaseModel
 	Code     string
 	Name     string
@@ -39,7 +44,7 @@ type DisciplineModel struct {
 	Hours    uint
 }
 
-type AudienceModel struct {
+type Audience struct {
 	BaseModel
 	Number    uint
 	Name      string

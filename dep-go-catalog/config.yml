@@ -5,8 +5,8 @@ server:
 secret_key: ${SECRET_KEY}
 
 database:
-  host: 0.0.0.0
-  port: 5432
+  host: localhost 
+  port: 5430
   name: postgres
   user: ${POSTGRES_USER}
   password: ${POSTGRES_PASSWORD}

@@ -40,12 +40,12 @@ func (s *SpecService) CreateSpec(ctx context.Context, spec *models.Specialty) er
 	})
 }
 
-func (s *SpecService) GetWithGroup(ctx context.Context, code string) (*models.Specialty, error) {
+func (s *SpecService) GetWithGroup(ctx context.Context, id uint) (*models.Specialty, error) {
 	var spec models.Specialty
 	err := s.db.WithContext(ctx).
 		Preload("Groups").
 		Preload("Groups.Teacher").
-		First(&spec, "code = ?", code).Error
+		First(&spec, "id = ?", id).Error
 		
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrNotFound

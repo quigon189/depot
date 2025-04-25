@@ -1,38 +1,16 @@
 package main
 
 import (
-	"context"
 	"dep-go-catalog/internal/config"
 	"dep-go-catalog/internal/database"
-	"dep-go-catalog/internal/models"
+	"dep-go-catalog/internal/http"
 	"dep-go-catalog/internal/services"
+	"fmt"
 
 	"log"
-
-	"gorm.io/gorm"
 )
 
-func AddTestSpec(db *gorm.DB) error {
-	spec := models.Specialty{
-		Code:      "12.34.56",
-		Name:      "asdasd",
-		ShortName: "as",
-	}
-	SpecService := services.NewSpecService(db)
 
-	err := SpecService.CreateSpec(context.Background(), &spec)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	rspec, err := SpecService.GetWithGroup(context.Background(), "12.34.56")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Printf("%+v", rspec)
-	return nil
-}
 
 func main() {
 	cfg := config.FetchConfig()
@@ -41,10 +19,12 @@ func main() {
 	db := database.Connect(cfg)
 	database.AutoMigrate(db)
 
-	err := AddTestSpec(db)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Fatalf("server %s:%s stoped", cfg.Server.Host, cfg.Server.Port)
+	specService := services.NewSpecService(db)
+	
+	router := http.NewRouter(
+		specService,
+	)
+	addr := fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)
+	log.Printf("Starting server on %s", addr)
+	log.Fatal(http.Serve(addr, router))
 }

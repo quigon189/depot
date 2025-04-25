@@ -4,67 +4,71 @@ import "time"
 
 type Specialty struct {
 	BaseModel
-	Code      string `gorm:"size:8;unique;not null"`
-	Name      string `gorm:"size:100;unique;not null"`
-	ShortName string `gorm:"size:3, not null"`
+	Code      string `gorm:"size:8;unique;not null" json:"code"`
+	Name      string `gorm:"size:100;unique;not null" json:"name"`
+	ShortName string `gorm:"size:6, not null" json:"short_name"`
 
-	Groups []Group `gorm:"foreignKey:SpecID"`
+	Groups []Group `gorm:"foreignKey:SpecID" json:"groups"`
 }
 
 type Group struct {
 	BaseModel
-	Number         uint `gorm:"not null"`
-	YearFormed     uint `gorm:"not null"`
-	SpecID         uint `gorm:"not null"`
-	ClassTeacherID uint
+	Number         uint `gorm:"not null" json:"number"`
+	YearFormed     uint `gorm:"not null" json:"year_formed"`
+	SpecID         uint `gorm:"not null" json:"spec_id"`
+	ClassTeacherID uint `json:"class_teacher_id"`
 
-	Students    []Student    `gorm:"foreignKey:GroupID"`
-	Disciplines []Discipline `gorm:"foreignKey:GroupID"`
-	Teacher     Teacher      `gorm:"foreignKey:ClassTeacherID"`
+	Students    []Student    `gorm:"foreignKey:GroupID" json:"students"`
+	Disciplines []Discipline `gorm:"foreignKey:GroupID" json:"disciplines"`
+	Teacher     Teacher      `gorm:"foreignKey:ClassTeacherID" json:"class_teacher"`
 }
 
 type Student struct {
 	BaseModel
-	FullName    string    `gorm:"size:255;not null"`
-	Birthdate   time.Time `gorm:"not null"`
-	PhoneNumber string    `gorm:"size:16"`
-	GroupID     uint
+	FirstName   string    `gorm:"size:255;not null" json:"first_name"`
+	MiddleName  string    `gorm:"size:255;not null" json:"middle_name"`
+	LastName    string    `gorm:"size:255;not null" json:"last_name"`
+	BirthDate   time.Time `gorm:"not null" json:"birth_date"`
+	PhoneNumber string    `gorm:"size:16" json:"phone"`
+	GroupID     uint      `json:"group_id"`
 
-	Group Group `gorm:"foreignKey:GroupID"`
+	Group Group `gorm:"foreignKey:GroupID" json:"group"`
 }
 
 type Teacher struct {
 	BaseModel
-	FullName    string    `gorm:"size:255;not null"`
-	Birthdate   time.Time `gorm:"not null"`
-	PhoneNumber string    `gorm:"size:16"`
+	FirstName   string    `gorm:"size:255;not null" json:"first_name"`
+	MiddleName  string    `gorm:"size:255;not null" json:"middle_name"`
+	LastName    string    `gorm:"size:255;not null" json:"last_name"`
+	BirthDate   time.Time `gorm:"not null" json:"birth_date"`
+	PhoneNumber string    `gorm:"size:16" json:"phone"`
 
-	Groups      []Group      `gorm:"foreignKey:ClassTeacherID;"`
-	Disciplines []Discipline `gorm:"many2many:teacher_disciplines;"`
+	Groups      []Group      `gorm:"foreignKey:ClassTeacherID;" json:"groups"`
+	Disciplines []Discipline `gorm:"many2many:teacher_disciplines;" json:"disciplines"`
 }
 
 type Discipline struct {
 	BaseModel
-	Code     string `gorm:"size:10;not null;"`
-	Name     string `gorm:"size:255;not null;"`
-	Semester uint   `gorm:"no null;"`
-	Hours    uint   `gorm:"no null;"`
-	GroupID  uint
+	Code     string `gorm:"size:10;not null;" json:"code"`
+	Name     string `gorm:"size:255;not null;" json:"name"`
+	Semester uint   `gorm:"no null;" json:"semester"`
+	Hours    uint   `gorm:"no null;" json:"hours"`
+	GroupID  uint `json:"group_id"`
 
-	Group    Group       `gorm:"foreignKey:GroupID;"`
-	Classes  []Classroom `gorm:"many2many:discipline_classrooms;"`
-	Teachers []Teacher   `gorm:"many2many:teacher_disciplines;"`
+	Group    Group       `gorm:"foreignKey:GroupID;" json:"group"`
+	Classes  []Classroom `gorm:"many2many:discipline_classrooms;" json:"classess"`
+	Teachers []Teacher   `gorm:"many2many:teacher_disciplines;" json:"teachers"`
 }
 
 type Classroom struct {
 	BaseModel
-	Number    uint   `gorm:"no null;"`
-	Name      string `gorm:"size:255;no null;"`
-	Type      string `gorm:"size:50;"`
-	Equipment string `gorm:"type:text;"`
-	Capacity  uint
-	TeacherID uint
+	Number    uint   `gorm:"no null;" json:"number"`
+	Name      string `gorm:"size:255;no null;" json:"name"`
+	Type      string `gorm:"size:50;" json:"type"`
+	Equipment string `gorm:"type:text;" json:"Equipment"`
+	Capacity  uint `json:"capacity"`
+	TeacherID uint `json:"teacher_id"`
 
-	Teacher     Teacher      `gorm:"foreignKey:TeacherID"`
-	Disciplines []Discipline `gorm:"many2many:discipline_classrooms;"`
+	Teacher     Teacher      `gorm:"foreignKey:TeacherID" json:"teacher"`
+	Disciplines []Discipline `gorm:"many2many:discipline_classrooms;" json:"disciplines"`
 }

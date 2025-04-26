@@ -5,7 +5,7 @@ import (
 	"dep-go-catalog/internal/database"
 	"dep-go-catalog/internal/http"
 	"dep-go-catalog/internal/services"
-	"fmt"
+	"net"
 
 	"log"
 )
@@ -14,7 +14,7 @@ import (
 
 func main() {
 	cfg := config.FetchConfig()
-	log.Printf("%+v", cfg)
+	//log.Printf("%+v", cfg)
 
 	db := database.Connect(cfg)
 	database.AutoMigrate(db)
@@ -24,7 +24,8 @@ func main() {
 	router := http.NewRouter(
 		specService,
 	)
-	addr := fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)
+	
+	addr := net.JoinHostPort(cfg.Server.Host, cfg.Server.Port)
 	log.Printf("Starting server on %s", addr)
 	log.Fatal(http.Serve(addr, router))
 }

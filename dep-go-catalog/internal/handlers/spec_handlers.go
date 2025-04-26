@@ -19,41 +19,46 @@ func (h *SpecHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		h.getSpec(w, r)
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		handleError(w, ErrMetodNotAllowed)
 	}
 }
 
 func (h *SpecHandler) createSpec(w http.ResponseWriter, r *http.Request) {
 	var spec models.Specialty
 
+	//	w.Header().Set("Content-Type", "application/json")
+
 	if err := json.NewDecoder(r.Body).Decode(&spec); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		handleError(w, ErrInvalidData)
+		return
 	}
 
 	if err := h.Service.CreateSpec(r.Context(), &spec); err != nil {
-		//исправить тут временная заглушка
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		handleError(w, err)
+		return
 	}
 
-	//	spec.Groups = []models.Group{}
-
-	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(&spec)
 }
 
 func (h *SpecHandler) getSpec(w http.ResponseWriter, r *http.Request) {
 	sid := r.PathValue("id")
 
+	//	w.Header().Set("Content-Type", "application/json")
+
 	id, err := strconv.ParseUint(sid, 10, 0)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		handleError(w, ErrInvalidData)
+		return
 	}
 
 	spec, err := h.Service.GetWithGroup(r.Context(), uint(id))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		handleError(w, err)
+		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(spec)
 }

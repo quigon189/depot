@@ -20,9 +20,11 @@ func main() {
 	database.AutoMigrate(db)
 
 	specService := services.NewSpecService(db)
+	groupService := services.NewGroupService(db, specService)
 	
 	router := http.NewRouter(
 		specService,
+		groupService,
 	)
 	
 	addr := net.JoinHostPort(cfg.Server.Host, cfg.Server.Port)

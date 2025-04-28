@@ -15,18 +15,22 @@ type SpecHandler struct {
 func (h *SpecHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		h.createSpec(w, r)
+		h.create(w, r)
 	case http.MethodGet:
-		h.getSpec(w, r)
+		path := r.PathValue("id")
+		switch path {
+		case "all":
+			h.getAll(w, r)
+		default:
+			h.get(w, r)
+		}
 	default:
 		handleError(w, ErrMetodNotAllowed)
 	}
 }
 
-func (h *SpecHandler) createSpec(w http.ResponseWriter, r *http.Request) {
+func (h *SpecHandler) create(w http.ResponseWriter, r *http.Request) {
 	var spec models.Specialty
-
-	//	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewDecoder(r.Body).Decode(&spec); err != nil {
 		handleError(w, ErrInvalidData)
@@ -38,16 +42,11 @@ func (h *SpecHandler) createSpec(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(&spec)
+	encode(w, http.StatusCreated, &spec)
 }
 
-func (h *SpecHandler) getSpec(w http.ResponseWriter, r *http.Request) {
-	sid := r.PathValue("id")
-
-	//	w.Header().Set("Content-Type", "application/json")
-
-	id, err := strconv.ParseUint(sid, 10, 0)
+func (h *SpecHandler) get(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(r.PathValue("id"), 10, 0)
 	if err != nil {
 		handleError(w, ErrInvalidData)
 		return
@@ -59,6 +58,15 @@ func (h *SpecHandler) getSpec(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(spec)
+	encode(w, http.StatusOK, &spec)
+}
+
+func (h *SpecHandler) getAll(w http.ResponseWriter, r *http.Request) {
+	specs, err := h.Service.GetAll(r.Context())
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	encode(w, http.StatusOK, &specs)
 }

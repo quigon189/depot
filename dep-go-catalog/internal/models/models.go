@@ -16,11 +16,11 @@ type Group struct {
 	Number         uint `gorm:"not null" json:"number"`
 	YearFormed     uint `gorm:"not null" json:"year_formed"`
 	SpecID         uint `gorm:"not null" json:"spec_id"`
-	ClassTeacherID uint `json:"class_teacher_id"`
+	ClassTeacherID *uint `json:"class_teacher_id"`
 
 	Students    []Student    `gorm:"foreignKey:GroupID" json:"students"`
 	Disciplines []Discipline `gorm:"foreignKey:GroupID" json:"disciplines"`
-	Teacher     Teacher      `gorm:"foreignKey:ClassTeacherID" json:"class_teacher"`
+	Teacher     *Teacher      `gorm:"foreignKey:ClassTeacherID" json:"class_teacher"`
 }
 
 type Student struct {

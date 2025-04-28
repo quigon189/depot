@@ -5,6 +5,6 @@ import (
 )
 
 func Serve(addr string, h http.Handler) error {
-	h = loggingMiddlware(jsonMiddleware(h))
+	h = loggingMiddlware(h)
 	return http.ListenAndServe(addr, h)
 }

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"dep-go-catalog/internal/services"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -19,22 +18,16 @@ func handleError(w http.ResponseWriter, err error) {
 	}
 	switch err {
 	case ErrMetodNotAllowed:
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(&errorJSON{Error: err.Error()})
+		encode(w,http.StatusMethodNotAllowed,&errorJSON{Error: err.Error()})
 	case ErrInvalidData:
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(&errorJSON{Error: err.Error()})
+		encode(w,http.StatusBadRequest,&errorJSON{Error: err.Error()})
 	case services.ErrNotFound:
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(&errorJSON{Error: err.Error()})
+		encode(w,http.StatusNotFound,&errorJSON{Error: err.Error()})
 	case services.ErrInvalidInput:
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(&errorJSON{Error: err.Error()})
+		encode(w,http.StatusBadRequest,&errorJSON{Error: err.Error()})
 	case services.ErrConflict:
-		w.WriteHeader(http.StatusConflict)
-		json.NewEncoder(w).Encode(&errorJSON{Error: err.Error()})
+		encode(w,http.StatusConflict,&errorJSON{Error: err.Error()})
 	default:
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(&errorJSON{Error: fmt.Sprintf("Internal server error: %s", err.Error())})
+		encode(w,http.StatusInternalServerError,&errorJSON{Error: fmt.Sprintf("Internal server error: %s", err.Error())})
 	}
 }

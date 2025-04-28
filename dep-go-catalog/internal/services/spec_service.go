@@ -40,16 +40,48 @@ func (s *SpecService) CreateSpec(ctx context.Context, spec *models.Specialty) er
 	})
 }
 
+func (s *SpecService) Get(ctx context.Context, id uint) (*models.Specialty, error) {
+	var spec models.Specialty
+
+	err := s.db.WithContext(ctx).First(&spec, "id = ?", id).Error
+	switch {
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		return nil, ErrNotFound
+	case err != nil:
+		return nil, err
+	}
+
+	return &spec, nil
+}
+
 func (s *SpecService) GetWithGroup(ctx context.Context, id uint) (*models.Specialty, error) {
 	var spec models.Specialty
 	err := s.db.WithContext(ctx).
 		Preload("Groups").
 		Preload("Groups.Teacher").
 		First(&spec, "id = ?", id).Error
-		
-	if errors.Is(err, gorm.ErrRecordNotFound) {
+	switch {
+	case errors.Is(err, gorm.ErrRecordNotFound):
 		return nil, ErrNotFound
+	case err != nil:
+		return nil, err
 	}
 
 	return &spec, nil
+}
+
+func (s *SpecService) GetAll(ctx context.Context) ([]models.Specialty, error) {
+	var specs []models.Specialty
+	err := s.db.WithContext(ctx).
+		Preload("Groups").
+		Preload("Groups.Teacher").
+		Find(&specs).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrNotFound	
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return specs, nil
 }

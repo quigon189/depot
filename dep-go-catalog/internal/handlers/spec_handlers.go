@@ -29,20 +29,36 @@ func (h *SpecHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *SpecHandler) create(w http.ResponseWriter, r *http.Request) {
-	var spec models.Specialty
+// func (h *SpecHandler) create(w http.ResponseWriter, r *http.Request) {
+// 	var spec models.Specialty
+//
+// 	if err := json.NewDecoder(r.Body).Decode(&spec); err != nil {
+// 		handleError(w, ErrInvalidData)
+// 		return
+// 	}
+//
+// 	if err := h.Service.CreateSpec(r.Context(), &spec); err != nil {
+// 		handleError(w, err)
+// 		return
+// 	}
+//
+// 	encode(w, http.StatusCreated, &spec)
+// }
 
-	if err := json.NewDecoder(r.Body).Decode(&spec); err != nil {
+func (h *SpecHandler) create(w http.ResponseWriter, r *http.Request) {
+	spec := h.Service.NewSpecModel()
+
+	if err := json.NewDecoder(r.Body).Decode(spec); err != nil {
 		handleError(w, ErrInvalidData)
 		return
 	}
 
-	if err := h.Service.CreateSpec(r.Context(), &spec); err != nil {
+	if err := h.Service.Create(r.Context(), spec); err != nil {
 		handleError(w, err)
 		return
 	}
 
-	encode(w, http.StatusCreated, &spec)
+	encode(w, http.StatusCreated, spec)
 }
 
 func (h *SpecHandler) get(w http.ResponseWriter, r *http.Request) {
@@ -52,8 +68,9 @@ func (h *SpecHandler) get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	spec, err := h.Service.GetWithGroup(r.Context(), uint(id))
-	if err != nil {
+	spec := h.Service.NewSpecModel()
+
+	 if err := h.Service.Get(r.Context(), spec, uint(id)); err != nil {
 		handleError(w, err)
 		return
 	}
@@ -62,8 +79,8 @@ func (h *SpecHandler) get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *SpecHandler) getAll(w http.ResponseWriter, r *http.Request) {
-	specs, err := h.Service.GetAll(r.Context())
-	if err != nil {
+	specs := h.Service.NewSpecModels()
+	if err := h.Service.GetAll(r.Context(), specs); err != nil {
 		handleError(w, err)
 		return
 	}

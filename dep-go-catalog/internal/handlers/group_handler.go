@@ -4,7 +4,6 @@ import (
 	"dep-go-catalog/internal/models"
 	"dep-go-catalog/internal/services"
 	"encoding/json"
-	"log"
 	"net/http"
 	"strconv"
 )
@@ -35,13 +34,11 @@ func (h *GroupHandler) create(w http.ResponseWriter, r *http.Request) {
 	var group models.Group
 
 	if err := json.NewDecoder(r.Body).Decode(&group); err != nil {
-		log.Print(err)
 		handleError(w, ErrInvalidData)
 		return
 	}
 
 	if err := h.Service.CreateGroup(r.Context(), &group); err != nil {
-		log.Print(err)
 		handleError(w, err)
 		return
 	}

@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	ErrInvalidData     = errors.New("invalid data")
+	ErrInvalidData     = errors.New("invalid data type")
 	ErrMetodNotAllowed = errors.New("metod not allowed")
 )
 

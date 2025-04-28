@@ -10,16 +10,19 @@ import (
 
 type GroupService struct {
 	*BaseService
-	specService *SpecService
+	specService    *SpecService
+	teacherService *TeacherService
 }
 
 func NewGroupService(
 	db *gorm.DB,
 	specService *SpecService,
+	teacherService *TeacherService,
 ) *GroupService {
 	return &GroupService{
-		BaseService: NewBaseService(db),
-		specService: specService,
+		BaseService:    NewBaseService(db),
+		specService:    specService,
+		teacherService: teacherService,
 	}
 }
 
@@ -36,7 +39,16 @@ func (s *GroupService) CreateGroup(ctx context.Context, group *models.Group) err
 		}
 	}
 
-	// Добавить проверку сеществования преподавателя
+	if group.ClassTeacherID != nil {
+		if _, err := s.teacherService.GetTeacher(ctx, *group.ClassTeacherID); err != nil {
+			switch err {
+			case ErrNotFound:
+				return ErrInvalidInput
+			default:
+				return err
+			}
+		}
+	}
 
 	return s.db.WithContext(ctx).Create(&group).Error
 }

@@ -30,7 +30,7 @@ func (s *GroupService) CreateGroup(ctx context.Context, group *models.Group) err
 	if group.Number == 0 || group.YearFormed == 0 || group.SpecID == 0 {
 		return ErrInvalidInput
 	}
-	if err := s.specService.Get(ctx, s.specService.NewSpecModel(), group.SpecID); err != nil {
+	if err := s.specService.Get(ctx, s.specService.NewModel(), group.SpecID); err != nil {
 		switch err {
 		case ErrNotFound:
 			return ErrInvalidInput

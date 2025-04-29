@@ -13,7 +13,7 @@ func NewRouter(
 ) http.Handler {
 	mux := http.NewServeMux()
 
-	specHandler := &handlers.SpecHandler{Service: specService}
+	specHandler := handlers.NewSpecHandler(specService) 
 	groupHandler := &handlers.GroupHandler{Service: groupService}
 	teacherHandler := &handlers.TeacherHandler{Service: teacherService}
 

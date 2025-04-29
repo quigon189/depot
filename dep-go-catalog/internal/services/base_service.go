@@ -3,9 +3,16 @@ package services
 import (
 	"context"
 	"errors"
+	"reflect"
 
 	"gorm.io/gorm"
 )
+
+type Service interface {
+	Create(ctx context.Context, model ServiceModel) error
+	Get(ctx context.Context, model any, id uint) error
+	GetAll(ctx context.Context, models any) error
+}
 
 type ServiceModel interface {
 	Validate() error
@@ -34,7 +41,7 @@ func (s *BaseService) Create(ctx context.Context, model ServiceModel) error {
 	return s.db.WithContext(ctx).Create(model).Error
 }
 
-func (s *BaseService) Get(ctx context.Context, model ServiceModel, id uint) error {
+func (s *BaseService) Get(ctx context.Context, model any, id uint) error {
 	tx := s.db.WithContext(ctx)
 	for _, p := range s.preloads {
 		tx = tx.Preload(p)
@@ -48,7 +55,11 @@ func (s *BaseService) Get(ctx context.Context, model ServiceModel, id uint) erro
 
 }
 
-func (s *BaseService) GetAll(ctx context.Context, models ServiceModel) error {
+func (s *BaseService) GetAll(ctx context.Context, models any) error {
+	t := reflect.TypeOf(models)
+	if t.Kind() != reflect.Pointer {
+		return errors.New("model type is not pointer")
+	}
 	tx := s.db.WithContext(ctx)
 	for _, p := range s.preloads {
 		tx = tx.Preload(p)

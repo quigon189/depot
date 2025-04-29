@@ -35,7 +35,7 @@ type GroupService struct {
 
 func NewGroupService(db *gorm.DB) *GroupService {
 	service := &GroupService{BaseService: NewBaseService(db)}
-	service.preloads = []string{"Students", "Teacher", "Specialty"}
+	service.preloads = []string{"Students", "Teacher", "Specialty", "Disciplines"}
 
 	return service
 }

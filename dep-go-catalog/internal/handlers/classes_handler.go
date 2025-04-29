@@ -5,6 +5,6 @@ import (
 	"net/http"
 )
 
-func NewTeacherHandler(service services.Service) http.Handler {
+func NewClassHandler(service services.Service) http.Handler {
 	return &BaseHandler{Service: service}
 }

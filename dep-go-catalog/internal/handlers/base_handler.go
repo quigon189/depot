@@ -14,7 +14,7 @@ type BaseHandler struct {
 func (h *BaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		h.create(w, r)
+		h.createBatch(w, r)
 	case http.MethodGet:
 		path := r.PathValue("id")
 		switch path {
@@ -28,8 +28,24 @@ func (h *BaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *BaseHandler) create(w http.ResponseWriter, r *http.Request) {
-	spec := h.Service.NewModel()
+// func (h *BaseHandler) create(w http.ResponseWriter, r *http.Request) {
+// 	spec := h.Service.NewModel()
+//
+// 	if err := json.NewDecoder(r.Body).Decode(spec); err != nil {
+// 		handleError(w, ErrInvalidData)
+// 		return
+// 	}
+//
+// 	if err := h.Service.Create(r.Context(), spec); err != nil {
+// 		handleError(w, err)
+// 		return
+// 	}
+//
+// 	encode(w, http.StatusCreated, spec)
+// }
+
+func (h *BaseHandler) createBatch(w http.ResponseWriter, r *http.Request) {
+	spec := h.Service.NewModels()
 
 	if err := json.NewDecoder(r.Body).Decode(spec); err != nil {
 		handleError(w, ErrInvalidData)
@@ -53,7 +69,7 @@ func (h *BaseHandler) get(w http.ResponseWriter, r *http.Request) {
 
 	spec := h.Service.NewModel()
 
-	 if err := h.Service.Get(r.Context(), spec, uint(id)); err != nil {
+	if err := h.Service.Get(r.Context(), spec, uint(id)); err != nil {
 		handleError(w, err)
 		return
 	}

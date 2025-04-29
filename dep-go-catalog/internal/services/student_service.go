@@ -1,54 +1,52 @@
 package services
 
 import (
-	"context"
 	"dep-go-catalog/internal/models"
-	"errors"
 
 	"gorm.io/gorm"
 )
+
+type student struct {
+	models.Student
+}
+
+func (m *student) Validate() error {
+	switch {
+	case m.FirstName == "":
+		return ErrInvalidInput
+	case m.MiddleName == "":
+		return ErrInvalidInput
+	case m.LastName == "":
+		return ErrInvalidInput
+	case m.GroupID == 0:
+		return ErrInvalidInput
+	case m.BirthDate == "":
+		return ErrInvalidInput
+	default:
+		return nil
+	}
+}
+
+type students []student
+
+func (m *students) Validate() error {
+	return nil
+}
 
 type StudentService struct {
 	*BaseService
 }
 
 func NewStudentService(db *gorm.DB) *StudentService {
-	return &StudentService{
-		BaseService: NewBaseService(db),
-	}
+	service := &StudentService{BaseService: NewBaseService(db)}
+	service.preloads = []string{"Group"}
+	return service
 }
 
-func (s *StudentService) CreateStudent(ctx context.Context, student *models.Student) error {
-	if student.FirstName == "" ||
-		student.MiddleName == "" ||
-		student.LastName == "" ||
-		student.BirthDate == "" {
-		return ErrInvalidInput
-	}
-
-	return s.db.WithContext(ctx).Create(student).Error
+func (s *StudentService) NewModel() ServiceModel {
+	return &student{}
 }
 
-func (s *StudentService) GetStudent(ctx context.Context, id uint) (*models.Student, error) {
-	var student models.Student
-
-	err := s.db.WithContext(ctx).Preload("Group").First(&student).Error
-	switch {
-	case errors.Is(err, gorm.ErrRecordNotFound):
-		return nil, ErrNotFound
-	case err != nil:
-		return nil, err
-	}
-
-	return &student, nil
-}
-
-func (s *StudentService) GetAllStudent(ctx context.Context) ([]models.Student, error) {
-	var students []models.Student
-
-	if err := s.db.WithContext(ctx).Find(&students).Error; err != nil {
-		return nil, err
-	}
-
-	return students, nil
+func (s *StudentService) NewModels() ServiceModel {
+	return &students{}
 }

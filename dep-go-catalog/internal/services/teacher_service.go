@@ -1,55 +1,48 @@
 package services
 
 import (
-	"context"
 	"dep-go-catalog/internal/models"
-	"errors"
 
 	"gorm.io/gorm"
 )
+
+type teacher struct {
+	models.Teacher
+}
+
+func (m *teacher) Validate() error {
+	switch {
+	case m.FirstName == "":
+		return ErrInvalidInput
+	case m.MiddleName == "":
+		return ErrInvalidInput
+	case m.LastName == "":
+		return ErrInvalidInput
+	default:
+		return nil
+	}
+}
+
+type teachers []teacher
+
+func (m *teachers) Validate() error {
+	return nil
+}
 
 type TeacherService struct {
 	*BaseService
 }
 
 func NewTeacherService(db *gorm.DB) *TeacherService {
-	return &TeacherService{
-		BaseService: NewBaseService(db),
-	}
+	service := &TeacherService{BaseService: NewBaseService(db)}
+	service.preloads = []string{"Groups", "Disciplines"}
+	return service
 }
 
-func (s *TeacherService) CreateTeacher(ctx context.Context, teacher *models.Teacher) error {
-	if teacher.FirstName == "" ||
-		teacher.MiddleName == "" ||
-		teacher.LastName == "" {
-		return ErrInvalidInput	
-	}
-
-	return s.db.WithContext(ctx).Create(&teacher).Error
+func (s *TeacherService) NewModel() ServiceModel {
+	return &teacher{}
 }
 
-func (s *TeacherService) GetTeacher(ctx context.Context, id uint) (*models.Teacher, error) {
-	var teacher models.Teacher
-
-	err := s.db.WithContext(ctx).First(&teacher, "id = ?", id).Error
-	switch {
-	case errors.Is(err, gorm.ErrRecordNotFound):
-		return nil, ErrNotFound
-	case err != nil:
-		return nil, err
-	}
-
-	return &teacher, nil
-}
-
-func (s *TeacherService) GetAllTeacher(ctx context.Context) ([]models.Teacher, error) {
-	var teachers []models.Teacher
-
-	err := s.db.WithContext(ctx).Find(&teachers).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return teachers, nil
-
+func (s *TeacherService) NewModels() ServiceModel {
+	return &teachers{}
 }

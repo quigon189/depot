@@ -14,7 +14,7 @@ func NewRouter(
 	mux := http.NewServeMux()
 
 	specHandler := handlers.NewSpecHandler(specService) 
-	groupHandler := &handlers.GroupHandler{Service: groupService}
+	groupHandler := handlers.NewGroupHandler(groupService)
 	teacherHandler := &handlers.TeacherHandler{Service: teacherService}
 
 	mux.Handle("GET /specialties/{id}", specHandler)

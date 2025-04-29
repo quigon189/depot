@@ -9,6 +9,9 @@ import (
 )
 
 type Service interface {
+	NewModel() ServiceModel
+	NewModels() ServiceModel
+
 	Create(ctx context.Context, model ServiceModel) error
 	Get(ctx context.Context, model any, id uint) error
 	GetAll(ctx context.Context, models any) error

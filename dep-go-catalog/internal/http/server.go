@@ -17,7 +17,7 @@ func NewServer(db *gorm.DB, addr string) *Server {
 
 	specService := services.NewSpecService(db)
 	teacherService := services.NewTeacherService(db)
-	groupService := services.NewGroupService(db, specService, teacherService)
+	groupService := services.NewGroupService(db)
 
 	srv.router = NewRouter(
 		specService,

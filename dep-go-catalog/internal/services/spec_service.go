@@ -6,12 +6,18 @@ import (
 	"gorm.io/gorm"
 )
 
-type specialty struct {
+type specialtyModel struct {
 	models.Specialty
 }
 
-func (m specialty) Validate() error {
-if len(m.Code) != 8 || m.Code[2] != '.' || m.Code[5] != '.' {
+type specialties []specialtyModel
+
+func (m *specialties) Validate() error {
+	return nil
+}
+
+func (m *specialtyModel) Validate() error {
+	if len(m.Code) != 8 || m.Code[2] != '.' || m.Code[5] != '.' {
 		return ErrInvalidInput
 	}
 
@@ -30,20 +36,16 @@ type SpecService struct {
 }
 
 func NewSpecService(db *gorm.DB) *SpecService {
-	service := &SpecService{
-		BaseService: NewBaseService(db),
-	}
-
+	service := &SpecService{BaseService: NewBaseService(db)}
 	service.preloads = []string{"Groups", "Groups.Teacher", "Groups.Students"}
 
 	return service
 }
 
-func (s *SpecService) NewModel() *specialty {
-	return &specialty{}
+func (s *SpecService) NewModel() ServiceModel {
+	return &specialtyModel{}
 }
 
-func (s *SpecService) NewModels() *[]specialty {
-	specs := make([]specialty, 0)
-	return &specs
+func (s *SpecService) NewModels() ServiceModel {
+	return &specialties{}
 }

@@ -9,6 +9,10 @@ type Specialty struct {
 	Groups []Group `gorm:"foreignKey:SpecID" json:"groups"`
 }
 
+func (Specialty) TableName() string {
+	return "specialties"
+}
+
 type Group struct {
 	BaseModel
 	Number         uint  `gorm:"not null" json:"number"`
@@ -19,6 +23,11 @@ type Group struct {
 	Students    []Student    `gorm:"foreignKey:GroupID" json:"students"`
 	Disciplines []Discipline `gorm:"foreignKey:GroupID" json:"disciplines"`
 	Teacher     *Teacher     `gorm:"foreignKey:ClassTeacherID" json:"class_teacher"`
+	Specialty   Specialty    `gorm:"foreignKey:SpecID" json:"specialty"`
+}
+
+func (Group) TableName() string {
+	return "groups"
 }
 
 type Student struct {
@@ -33,6 +42,10 @@ type Student struct {
 	Group Group `gorm:"foreignKey:GroupID" json:"group"`
 }
 
+func (Student) TableName() string {
+	return "students"
+}
+
 type Teacher struct {
 	BaseModel
 	FirstName   string `gorm:"size:255;not null" json:"first_name"`
@@ -43,6 +56,10 @@ type Teacher struct {
 
 	Groups      []Group      `gorm:"foreignKey:ClassTeacherID;" json:"groups"`
 	Disciplines []Discipline `gorm:"many2many:teacher_disciplines;" json:"disciplines"`
+}
+
+func (Teacher) TableName() string {
+	return "teachers"
 }
 
 type Discipline struct {
@@ -58,6 +75,10 @@ type Discipline struct {
 	Teachers []Teacher   `gorm:"many2many:teacher_disciplines;" json:"teachers"`
 }
 
+func (Discipline) TableName() string {
+	return "disciplines"
+}
+
 type Classroom struct {
 	BaseModel
 	Number    uint   `gorm:"no null;" json:"number"`
@@ -69,4 +90,8 @@ type Classroom struct {
 
 	Teacher     Teacher      `gorm:"foreignKey:TeacherID" json:"teacher"`
 	Disciplines []Discipline `gorm:"many2many:discipline_classrooms;" json:"disciplines"`
+}
+
+func (Classroom) TableName() string {
+	return "classrooms"
 }

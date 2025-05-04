@@ -35,10 +35,16 @@ def get_specialties():
 
     result = []
     for spec in specs:
-        row = {}
-        for header in specialties_headers:
-            row[specialties_headers[header]] = spec[header]
-        result.append(row)
+        try:
+            row = {}
+            row["#"] = spec["id"]
+            row["Код специальности"] = spec["code"]
+            row["Наименование специальности"] = spec["name"]
+            row["Короткое обозначение"] = spec["short_name"]
+            row["Группы"] = spec["groups"]
+            result.append(row)
+        except Exception as e:
+            print(e)
 
     return result
 

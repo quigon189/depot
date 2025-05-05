@@ -6,27 +6,61 @@ CATALOG = "http://go-catalog:8080/"
 def get_data(path):
     req = requests.get(f"{CATALOG}{path}")
 
-    try:
-        result = req.json()
-    except Exception as e:
-        print(e)
+    if req.status_code == 200:
+        return req.json()
+    else:
         return []
-
-    return result
-
 
 def get_specialties():
     specs = get_data('specialties/all')
     for spec in specs:
         spec['groups_count'] = len(spec['groups'])
 
-    return specs
+    fields = [
+        {'key': 'code', 'label': 'Код', 'link': True},
+        {'key': 'name', 'label': 'Наименование'},
+        {'key': 'short_name', 'label': 'Короткое обозначение'},
+        {'key': 'groups_count', 'label': 'Количество групп'}
+    ]
+    
+    return specs, fields
 
 
 def get_specialty(id):
-    specialty = get_data(f'specialties/{id}')
+    req = requests.get(f"{CATALOG}/specialties/{id}")
+    if req.status_code == 200:
+        specialty = req.json()
+    else:
+        return {}, [], []
 
-    return specialty
+    fields = [
+        {'key': 'code', 'label': 'Код'},
+        {'key': 'name', 'label': 'Наименование'},
+        {'key': 'short_name', 'label': 'Короткое обозначение'}
+    ]
+
+    for group in specialty['groups']:
+        group['name'] = f'{specialty["short_name"]}-{group["number"]}'
+        group['class_teacher'] = f'{group["class_teacher"]["last_name"]} {group["class_teacher"]["first_name"][0]}. {group["class_teacher"]["middle_name"][0]}.'
+        if 'students' in group:
+            group['students_count'] = len(group['students'])
+        else:
+            group['students_count'] = 0
+
+    nested = [
+        {
+            'label': 'Группы',
+            'type': 'groups',
+            'fields': [
+                {'key': 'name', 'label': 'Номер', 'link': True},
+                {'key': 'year_formed', 'label': 'Год набора'},
+                {'key': 'class_teacher', 'label': 'Классный руководитель'},
+                {'key': 'students_count', 'label': 'Количество студентов'}
+                ],
+            'items': specialty['groups'],
+        }
+    ] 
+    return specialty, fields, nested
 
 
 def get_specialties_old():

@@ -3,7 +3,7 @@
 	<thead>
 		<tr>
 			{% for field in fields %}
-			<th>{{ field.lable }}</th>
+			<th>{{ field.label }}</th>
 			{% endfor %}
 			<th>Действия</th>
 		</tr>
@@ -45,17 +45,29 @@
 		</p>
 		{% endfor %}
 
-		{% for nested_item in nested %}
-		<h5>{{ nested_item.label }}</h5>
-		<div class="list-group">
-			{% for element in item[nested_item.key] %}
-			<a href="/{{ nested_item.entity_type }}/{{ element.id }}"
-				class="list-group-item list-group-item-action">
-				{{ element.name }}
-			</a>
-			{% endfor %}
-		</div>
+		{% for nested_entity in nested %}
+		<h5>{{ nested_entity.label }}</h5>
+		{{ table(nested_entity['items'], nested_entity.fields, nested_entity.type) }}
 		{% endfor %}
 	</div>
 </div>
+{% endmacro %}
+
+{% macro form(fields, entity_type) %}
+<form method="POST">
+	{% for field in fields %}
+	<div class="mb-3">
+		<label class="form-label">{{ field.label }}</label>
+		<input type="{{ field.type }}" class="form-control"
+			name="{{ field.name }}"
+			value="{{ field.value }}"
+			{{ field.required }}>
+	</div>
+	{% endfor %}
+
+	<div class="mb-4">
+		<button type="submit" class="btn btn-primary">Сохранить</button>
+		<a href="/{{ entity_type }}" class="btn btn-secondary">Отменить</a>
+	</div>
+</form>
 {% endmacro %}

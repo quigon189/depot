@@ -1,7 +1,6 @@
 {% import 'macros/render.html' as render %}
 {% extends 'base.html' %}
 {% block content %}
-
-{{ render.card(item, fields, nested) }}
-
+<h2>{{ header }}</h2>
+{{ render.form(fields, entity_type)}}
 {% endblock %}

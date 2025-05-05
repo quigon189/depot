@@ -1,0 +1,61 @@
+{% macro table(items, fields, entity_type) %}
+<table class="table table-hover">
+	<thead>
+		<tr>
+			{% for field in fields %}
+			<th>{{ field.lable }}</th>
+			{% endfor %}
+			<th>Действия</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for item in items %}
+		<tr>
+			{% for field in fields %}
+			<td>
+				{% if field.link %}
+				<a href="/{{ entity_type }}/{{ item.id }}">{{ item[field.key] }}</a>
+				{% else %}
+				{{ item[field.key] }}
+				{% endif %}
+			</td>
+			{% endfor %}
+			<td>
+				<a href="/{{ entity_type }}/{{ item.id }}/edit" class="btn btn-sm btn-warning">Изменить</a>
+				<button class="btn btn-sm btn-danger" data-bs-toggle="modal"
+					data-bs-target="#deletModal-{{ entity_type }}-{{ item.id }}">
+					Удалить
+				</button>
+			</td>
+			{% endfor %}
+		</tr>
+	</tbody>
+</table>
+{% endmacro %}
+
+{% macro card(item, fields, nested=[]) %}
+<div class="card">
+	<div class="card-header">
+		<h4>{{ item.name }}</h4>
+	</div>
+	<div class="card-body">
+		{% for field in fields %}
+		<p class="card-text">
+			<strong>{{ field.label }}</strong> {{ item[field.key] }}
+		</p>
+		{% endfor %}
+
+		{% for nested_item in nested %}
+		<h5>{{ nested_item.label }}</h5>
+		<div class="list-group">
+			{% for element in item[nested_item.key] %}
+			<a href="/{{ nested_item.entity_type }}/{{ element.id }}"
+				class="list-group-item list-group-item-action">
+				{{ element.name }}
+			</a>
+			{% endfor %}
+		</div>
+		{% endfor %}
+	</div>
+</div>
+{% endmacro %}

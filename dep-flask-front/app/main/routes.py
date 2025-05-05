@@ -10,7 +10,6 @@ def index():
     return render_template('index.html')
 
 
-
 @main_bp.route('/user')
 @jwt_required
 def user():
@@ -22,11 +21,29 @@ def user():
 def specialties():
     specs = services.get_specialties()
 
+    fields = [
+        {'key': 'code', 'lable': 'Код', 'link': True},
+        {'key': 'name', 'lable': 'Наименование'},
+        {'key': 'short_name', 'lable': 'Короткое обозначение'},
+        {'key': 'groups_count', 'lable': 'Количество групп'}
+    ]
+
     return render_template(
-        'view/table.html',
+        'control/list.html',
         header='Специализации',
-        records=specs
+        fields=fields,
+        items=specs,
+        entity_type='specialties'
     )
+
+
+@main_bp.route('/specialties/<int:id>')
+@jwt_required
+def specialty_info(id):
+    specialty = services.get_specialty(id)
+    return render_template(
+        'vies'
+            )
 
 
 @main_bp.route('/groups')
@@ -44,7 +61,7 @@ def groups():
 @main_bp.route('/students')
 @jwt_required
 def students():
-    students = services.get_data('students')
+    students = services.get_students()
 
     return render_template(
         'view/table.html',
@@ -56,7 +73,7 @@ def students():
 @main_bp.route('/disciplines')
 @jwt_required
 def disciplines():
-    disciplines = services.get_data('disciplines')
+    disciplines = services.get_disciplines()
 
     return render_template(
         'view/table.html',
@@ -68,7 +85,7 @@ def disciplines():
 @main_bp.route('/teachers')
 @jwt_required
 def teachers():
-    teachers = services.get_data('teachers')
+    teachers = services.get_teachers()
 
     return render_template(
         'view/table.html',
@@ -80,7 +97,7 @@ def teachers():
 @main_bp.route('/classes')
 @jwt_required
 def classes():
-    classes = services.get_data('classes')
+    classes = services.get_classes()
 
     return render_template(
         'view/table.html',

@@ -1,9 +1,14 @@
 {% import 'macros/render.html' as render %}
+{% import 'macros/modal.html' as modal %}
 {% extends "base.html" %}
 {% block content %}
 <h2>{{header}}</h2>
 <a href="/{{ entity_type }}/create" class="btn btn-success mb-3">Добавить</a>
 
 {{ render.table(items, fields, entity_type) }}
+
+{% for item in items %}
+{{ modal.delete(entity_type, item) }}
+{% endfor %}
 
 {% endblock %}

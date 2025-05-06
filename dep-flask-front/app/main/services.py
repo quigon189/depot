@@ -4,15 +4,21 @@ CATALOG = "http://go-catalog:8080/"
 
 
 def get_data(path):
-    req = requests.get(f"{CATALOG}{path}")
+    resp = requests.get(f"{CATALOG}{path}")
 
-    if req.status_code == 200:
-        return req.json()
+    if resp.status_code == 200:
+        return resp.json()
     else:
         return []
 
+
 def get_specialties():
-    specs = get_data('specialties/all')
+    resp = requests.get(f"{CATALOG}/specialties/all")
+    if resp.status_code == 200:
+        specs = resp.json()
+    else:
+        specs = []
+
     for spec in specs:
         spec['groups_count'] = len(spec['groups'])
 
@@ -22,14 +28,13 @@ def get_specialties():
         {'key': 'short_name', 'label': 'Короткое обозначение'},
         {'key': 'groups_count', 'label': 'Количество групп'}
     ]
-    
     return specs, fields
 
 
 def get_specialty(id):
-    req = requests.get(f"{CATALOG}/specialties/{id}")
-    if req.status_code == 200:
-        specialty = req.json()
+    resp = requests.get(f"{CATALOG}/specialties/{id}")
+    if resp.status_code == 200:
+        specialty = resp.json()
     else:
         return {}, [], []
 
@@ -56,77 +61,76 @@ def get_specialty(id):
                 {'key': 'year_formed', 'label': 'Год набора'},
                 {'key': 'class_teacher', 'label': 'Классный руководитель'},
                 {'key': 'students_count', 'label': 'Количество студентов'}
-                ],
+            ],
             'items': specialty['groups'],
         }
-    ] 
+    ]
     return specialty, fields, nested
 
 
-def get_specialties_old():
-    specs = get_data('specialties')
-    result = []
-    for spec in specs:
-        try:
-            row = {}
-            row["#"] = spec["id"]
-            row["Код специальности"] = spec["code"]
-            row["Наименование специальности"] = spec["name"]
-            row["Короткое обозначение"] = spec["short_name"]
-            if "groups" in spec:
-                groups = []
-                for group in spec["groups"]:
-                    g = {}
-                    g["#"] = group["id"]
-                    g["Наименование"] = f"{spec['short_name']}-{group['number']}"
-                    g["Год набора"] = group['year_formed']
-                    if 'class_teacher' in group:
-                        g["Классный руководитель"] = f"{group['class_teacher']['last_name']} {group['class_teacher']['first_name'][0]}. {group['class_teacher']['middle_name'][0]}."
-                    else:
-                        g["Классный руководитель"] = "не назначен"
-                    groups.append(g)
-                row["Группы"] = groups
-            else:
-                row["Группы"] = "Отсутствуют"
-            result.append(row)
-        except Exception as e:
-            print(f"Error ({e}) show spec: {spec}")
-
-    return result
-
-
 def get_groups():
-    groups = get_data('groups')
-    result = []
+    resp = requests.get(f'{CATALOG}/groups/all')
+    if resp.status_code == 200:
+        groups = resp.json()
+    else:
+        groups = []
+
     for group in groups:
-        try:
-            row = {}
-            row["#"] = group["id"]
-            row["Наименование"] = f"{group['specialty']['short_name']}-{group['number']}"
-            row["Год набора"] = group["year_formed"]
-            if 'class_teacher' in group:
-                row["Классный руководитель"] = f"{group['class_teacher']['last_name']} {group['class_teacher']['first_name']} {group['class_teacher']['middle_name']}"
-            else:
-                row["Классный руководитель"] = "не назначен"
-            if 'students' in group:
-                students = []
-                for student in group['students']:
-                    s = {}
-                    s["#"] = student["id"]
-                    s["ФИО"] = f"{student['last_name']} {student['first_name']} {student['middle_name']}"
-                    s["Дата рождения"] = student["birth_date"]
-                    s["Номер телефона"] = student["phone"]
-                    students.append(s)
+        group['name'] = f"{group['specialty']['short_name']}-{group['number']}"
+        group["class_teacher"] = f"{group['class_teacher']['last_name']} {group['class_teacher']['first_name'][0]}. {group['class_teacher']['middle_name'][0]}."
+        if 'students' in group:
+            group['students_count'] = len(group['students'])
+        else:
+            group['students_count'] = 0
+        group['specialty'] = f"{group['specialty']['code']} {group['specialty']['name']}"
 
-                row["Студенты"] = students
-            else:
-                row["Студенты"] = "-"
-            result.append(row)
+    fields = [
+        {'key': 'name', 'label': 'Наименование', 'link': True},
+        {'key': 'specialty', 'label': 'Специальность'},
+        {'key': 'year_formed', 'label': 'Год набора'},
+        {'key': 'class_teacher', 'label': 'Классный руководитель'},
+        {'key': 'students_count', 'label': 'Количество студентов'}
+    ]
 
-        except Exception as e:
-            print(f"Error ({e}) match group: {group} ")
+    return groups, fields
 
-    return result
+
+def get_group(id):
+    resp = requests.get(f"{CATALOG}/groups/{id}")
+    if resp.status_code == 200:
+        group = resp.json()
+    else:
+        return {}, [], []
+
+    group['name'] = f"{group['specialty']['short_name']}-{group['number']}"
+    group["class_teacher"] = f"{group['class_teacher']['last_name']} {group['class_teacher']['first_name']} {group['class_teacher']['middle_name']}"
+    group['specialty'] = f"{group['specialty']['code']} {group['specialty']['name']}"
+
+    fields = [
+        {'key': 'specialty', 'label': 'Специальность'},
+        {'key': 'year_formed', 'label': 'Год набора'},
+        {'key': 'class_teacher', 'label': 'Классный руководитель'}
+    ]
+
+    if not ('students' in group):
+        group['students'] = []
+
+    for student in group['students']:
+        student['name'] = f'{student["last_name"]} {student["first_name"]} {student["middle_name"]}'
+
+    nested = [
+        {
+            'label': 'Студенты',
+            'type': 'students',
+            'fields': [
+                {'key': 'name', 'label': 'ФИО', 'link': True},
+                {'key': 'birth_date', 'label': 'День рождения'},
+                {'key': 'phone', 'label': 'Номер телефона'},
+            ],
+            'items': group['students']
+        }
+    ]
+    return group, fields, nested
 
 
 def get_students():
@@ -207,5 +211,3 @@ def get_classes():
 
         result.append(c)
     return result
-
-

@@ -1,7 +1,8 @@
-from flask import flash, redirect, render_template, url_for, request
+from flask import flash, redirect, render_template, url_for
 from app.main import main_bp
 from app.require import jwt_required
-from app.services import services
+from app.main import services
+from app.main.forms import CreateSpecialityForm
 
 
 @main_bp.route('/index')
@@ -46,52 +47,73 @@ def specialty_info(id):
 @main_bp.route('/specialties/create', methods=['GET', 'POST'])
 @jwt_required
 def create_specialty():
-    if request.method == 'POST':
+    form = CreateSpecialityForm()
+
+    if form.validate_on_submit():
         flash("Добавляем специальность")
         return redirect(url_for('main.specialties'))
-    fields = [
-            {'label': 'Код', 'type': 'text', 'name': 'code', 'value': '', 'required': 'required'},
-            {'label': 'Наименование', 'type': 'text', 'name': 'name', 'value': '', 'required': 'required'},
-            {'label': 'Короткое обозначение', 'type': 'text', 'name': 'short_name', 'value': '', 'required': 'required'},
-            ]
+
     return render_template(
         'control/form.html',
-        header = 'Создать специальность',
-        fields = fields,
-        entity_type = 'specialties'
+        header='Создать специальность',
+        form=form,
+        entity_type='specialties'
     )
 
 
 @main_bp.route('/specialties/<int:id>/edit', methods=['GET', 'POST'])
 @jwt_required
 def edit_specialty(id):
-    if request.method == 'POST':
+    form = CreateSpecialityForm()
+
+    if form.validate_on_submit():
         flash("Изменения внесены")
         return redirect(url_for('main.specialties'))
 
-    specialty, f, n = services.get_specialty(id)
-    fields = [
-            {'label': 'Код', 'type': 'text', 'name': 'code', 'value': specialty["code"], 'required': 'required'},
-            {'label': 'Наименование', 'type': 'text', 'name': 'name', 'value': specialty["name"], 'required': 'required'},
-            {'label': 'Короткое обозначение', 'type': 'text', 'name': 'short_name', 'value': specialty["short_name"], 'required': 'required'}
-        ]
+    specialty, _, _ = services.get_specialty(id)
+    form.code.data = specialty['code']
+    form.name.data = specialty['name']
+    form.short_name.data = specialty['short_name']
+
     return render_template(
         'control/form.html',
-        header = 'Изменить специальность',
-        fields = fields,
-        entity_type = 'specialties',
+        header='Изменить специальность',
+        form=form,
+        entity_type='specialties',
     )
+
+
+@main_bp.route('/specialties/<int:id>/delete', methods=['POST'])
+@jwt_required
+def delete_specialty(id):
+    flash(f"Специальность {id} удалена")
+    return redirect(url_for('main.specialties'))
 
 
 @main_bp.route('/groups')
 @jwt_required
 def groups():
-    groups = services.get_groups()
+    groups, fields = services.get_groups()
 
     return render_template(
-        'view/table.html',
-        header='Группы',
-        records=groups
+        'control/list.html',
+        header='Специальности',
+        fields=fields,
+        items=groups,
+        entity_type='groups'
+    )
+
+
+@main_bp.route('/groups/<int:id>')
+@jwt_required
+def group_info(id):
+    group, fields, nested = services.get_group(id)
+
+    return render_template(
+        'control/view.html',
+        fields=fields,
+        item=group,
+        nested=nested
     )
 
 

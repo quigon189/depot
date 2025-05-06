@@ -23,7 +23,7 @@
 			<td>
 				<a href="/{{ entity_type }}/{{ item.id }}/edit" class="btn btn-sm btn-warning">Изменить</a>
 				<button class="btn btn-sm btn-danger" data-bs-toggle="modal"
-					data-bs-target="#deletModal-{{ entity_type }}-{{ item.id }}">
+					data-bs-target="#deleteModal-{{ entity_type }}-{{ item.id }}">
 					Удалить
 				</button>
 			</td>
@@ -41,7 +41,7 @@
 	<div class="card-body">
 		{% for field in fields %}
 		<p class="card-text">
-			<strong>{{ field.label }}</strong> {{ item[field.key] }}
+			<strong>{{ field.label }}:</strong> {{ item[field.key] }}
 		</p>
 		{% endfor %}
 
@@ -53,19 +53,19 @@
 </div>
 {% endmacro %}
 
-{% macro form(fields, entity_type) %}
+{% macro form(form, entity_type) %}
 <form method="POST">
-	{% for field in fields %}
+	{{ form.hidden_tag() }}
+	{% for field in form %}
+	{% if field.label.text != "CSRF Token" %}
 	<div class="mb-3">
-		<label class="form-label">{{ field.label }}</label>
-		<input type="{{ field.type }}" class="form-control"
-			name="{{ field.name }}"
-			value="{{ field.value }}"
-			{{ field.required }}>
+		{{ field.label(class="form-label") }}
+		{{ field(class="form-control", required="required")}}
 	</div>
+	{% endif %}
 	{% endfor %}
 
-	<div class="mb-4">
+	<div class="mb-4 justify-content-center">
 		<button type="submit" class="btn btn-primary">Сохранить</button>
 		<a href="/{{ entity_type }}" class="btn btn-secondary">Отменить</a>
 	</div>

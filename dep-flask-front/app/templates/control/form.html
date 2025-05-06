@@ -1,6 +1,10 @@
 {% import 'macros/render.html' as render %}
 {% extends 'base.html' %}
 {% block content %}
-<h2>{{ header }}</h2>
-{{ render.form(fields, entity_type)}}
+<div class="row justify-content-center">
+	<div class="col-4">
+		<h2>{{ header }}</h2>
+		{{ render.form(form, entity_type)}}
+	</div>
+</div>
 {% endblock %}

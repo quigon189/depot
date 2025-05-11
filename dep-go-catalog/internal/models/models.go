@@ -84,7 +84,7 @@ type Classroom struct {
 	Number    uint   `gorm:"no null;" json:"number"`
 	Name      string `gorm:"size:255;no null;" json:"name"`
 	Type      string `gorm:"size:50;" json:"type"`
-	Equipment string `gorm:"type:text;" json:"Equipment"`
+	Equipment string `gorm:"type:text;" json:"equipment"`
 	Capacity  uint   `json:"capacity"`
 	TeacherID uint   `json:"teacher_id"`
 

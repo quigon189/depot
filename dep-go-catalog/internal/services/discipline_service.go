@@ -39,7 +39,7 @@ type DisciplineService struct {
 
 func NewDisciplineService(db *gorm.DB) *DisciplineService {
 	service := &DisciplineService{BaseService: NewBaseService(db)}
-	service.preloads = []string{"Group", "Classes", "Teachers"}
+	service.preloads = []string{"Group", "Group.Specialty", "Classes", "Teachers"}
 	return service
 }
 

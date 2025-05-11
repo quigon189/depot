@@ -37,7 +37,7 @@ type SpecService struct {
 
 func NewSpecService(db *gorm.DB) *SpecService {
 	service := &SpecService{BaseService: NewBaseService(db)}
-	service.preloads = []string{"Groups", "Groups.Teacher", "Groups.Students", "Groups.Disciplines"}
+	service.preloads = []string{"Groups"}
 
 	return service
 }

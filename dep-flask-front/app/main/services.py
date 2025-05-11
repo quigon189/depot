@@ -147,7 +147,7 @@ def get_students():
 
     for student in students:
         student['name'] = f"{student['last_name']} {student['first_name']} {student['middle_name']}"
-        student['group_number'] = student['group']['number']
+        student['group_number'] = f"{student['group']['specialty']['short_name']}-{student['group']['number']}"
 
     fields = [
         {'key': 'name', 'label': 'ФИО', 'link': True},
@@ -170,7 +170,7 @@ def get_student(id):
         return {'item': {}, 'fields': [], 'nested': []}
 
     student['name'] = f"{student['last_name']} {student['first_name']} {student['middle_name']}"
-    student['group_number'] = student['group']['number']
+    student['group_number'] = f"{student['group']['specialty']['short_name']}-{student['group']['number']}"
 
     fields = [
         {'key': 'group_number', 'label': 'Группа'},
@@ -225,7 +225,7 @@ def get_teacher(id):
         teacher['groups'] = []
 
     for group in teacher['groups']:
-        group['name'] = group['number']
+        group['name'] = f"{group['specialty']['short_name']}-{group['number']}"
 
     nested = [
         {
@@ -255,7 +255,7 @@ def get_disciplines():
 
     for disc in disciplines:
         disc['name'] = f'{disc["code"]}.{disc["name"]}'
-        disc['group_number'] = disc['group']['number']
+        disc['group_number'] = f"{disc['group']['specialty']['short_name']}-{disc['group']['number']}"
         disc['hours'] = f"{disc['hours']} ч."
 
     fields = [
@@ -279,7 +279,7 @@ def get_discipline(id):
         return {'item': {}, 'fields': [], 'nested': []}
 
     discipline['name'] = f"{discipline['code']}.{discipline['name']}"
-    discipline['group_number'] = discipline['group']['number']
+    discipline['group_number'] = f"{discipline['group']['specialty']['short_name']}-{discipline['group']['number']}"
 
     fields = [
         {'key': 'group_number', 'label': 'Номер группы'},
@@ -311,7 +311,7 @@ def get_classes():
         {'key': 'name', 'label': 'Наименование'},
         {'key': 'class_teacher', 'label': 'Заведующий'},
         {'key': 'capacity', 'label': 'Вместительность'},
-        {'key': 'Equipment', 'label': 'Оснащение'},
+        {'key': 'equipment', 'label': 'Оснащение'},
     ]
 
     return {
@@ -333,7 +333,7 @@ def get_class(id):
         {'key': 'class_teacher', 'label': 'Заведующий'},
         {'key': 'type', 'label': 'Тип'},
         {'key': 'capacity', 'label': 'Вместимтельность'},
-        {'key': 'Equipment', 'label': 'Оснащение'}
+        {'key': 'equipment', 'label': 'Оснащение'}
     ]
 
     nested = []

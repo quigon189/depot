@@ -15,6 +15,7 @@ type Service interface {
 	Create(ctx context.Context, model ServiceModel) error
 	Get(ctx context.Context, model any, id uint) error
 	GetAll(ctx context.Context, models any) error
+	Update(ctx context.Context, model ServiceModel) error
 }
 
 type ServiceModel interface {
@@ -68,4 +69,12 @@ func (s *BaseService) GetAll(ctx context.Context, models any) error {
 		tx = tx.Preload(p)
 	}
 	return tx.Find(models).Error
+}
+
+func (s *BaseService) Update(ctx context.Context, model ServiceModel) error {
+	if err := model.Validate(); err != nil {
+		return ErrInvalidInput
+	}
+
+	return s.db.WithContext(ctx).Save(model).Error
 }

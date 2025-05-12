@@ -11,7 +11,10 @@ def get_specialties():
         specs = []
 
     for spec in specs:
-        spec['groups_count'] = len(spec['groups'])
+        if 'groups' in spec:
+            spec['groups_count'] = len(spec['groups'])
+        else:
+            spec['groups_count'] = 0
 
     fields = [
         {'key': 'code', 'label': 'Код', 'link': True},
@@ -37,6 +40,9 @@ def get_specialty(id):
         {'key': 'name', 'label': 'Наименование'},
         {'key': 'short_name', 'label': 'Короткое обозначение'}
     ]
+
+    if not ('groups' in specialty):
+        specialty['groups'] = []
 
     for group in specialty['groups']:
         group['name'] = f'{specialty["short_name"]}-{group["number"]}'
@@ -343,3 +349,120 @@ def get_class(id):
         'fields': fields,
         'nested': nested
     }
+
+
+def send_specialty(form):
+    url = f"{CATALOG}/specialties"
+
+    specialty = {
+        'code': form.code.data,
+        'name': form.name.data,
+        'short_name': form.short_name.data
+    }
+
+    headers = {
+        'Content-Type': 'application/json',
+    }
+
+    return requests.post(url, json=[specialty], headers=headers)
+
+
+def send_group(form):
+    url = f"{CATALOG}/groups"
+
+    group = {
+        'number': int(form.number.data),
+        'year_formed': int(form.year_formed.data),
+        'spec_id': int(form.spec_id.data),
+        'class_teacher_id': int(form.class_teacher_id.data)
+    }
+
+    headers = {
+        'Content-Type': 'application/json'
+    }
+
+    return requests.post(url, json=[group], headers=headers)
+
+
+def send_student(form):
+    url = f"{CATALOG}/students"
+
+    student = {
+        'last_name': form.last_name.data,
+        'first_name': form.first_name.data,
+        'middle_name': form.middle_name.data,
+        'birth_date': form.birth_date.data,
+        'phone': form.phone.data,
+        'group_id': int(form.group_id.data)
+    }
+
+    headers = {
+        'Content-Type': 'application/json'
+    }
+
+    return requests.post(url, json=[student], headers=headers)
+
+
+def send_teacher(form):
+    url = f"{CATALOG}/teachers"
+
+    teacher = {
+        'last_name': form.last_name.data,
+        'first_name': form.first_name.data,
+        'middle_name': form.middle_name.data,
+        'birth_date': form.birth_date.data,
+        'phone': form.phone.data,
+    }
+
+    headers = {
+        'Content-Type': 'application/json'
+    }
+
+    return requests.post(url, json=[teacher], headers=headers)
+
+
+def send_discipline(form):
+    url = f"{CATALOG}/disciplines"
+
+    disciplines = {
+        'code': form.code.data,
+        'name': form.name.data,
+        'semester': int(form.semester.data),
+        'hours': int(form.hours.data),
+        'group_id': int(form.group_id.data)
+    }
+
+    headers = {
+        'Content-Type': 'application/json'
+    }
+
+    return requests.post(url, json=[disciplines], headers=headers)
+
+
+def send_class(form):
+    url = f"{CATALOG}/classes"
+
+    cl = {
+        'number': int(form.number.data),
+        'name': form.name.data,
+        'type': form.type.data,
+        'capacity': int(form.capacity.data),
+        'equipment': form.equipment.data,
+        'teacher_id': int(form.teacher_id.data)
+    }
+
+    headers = {
+        'Content-Type': 'application/json'
+    }
+
+    return requests.post(url, json=[cl], headers=headers)
+
+
+def update_entity(entity, entity_type):
+    url = f"{CATALOG}/{entity_type}"
+
+    headers = {
+        'Content-Type': 'application/json'
+    }
+
+    return requests.put(url, json=entity, headers=headers)

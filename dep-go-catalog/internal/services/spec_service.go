@@ -13,6 +13,11 @@ type specialty struct {
 type specialties []specialty
 
 func (m *specialties) Validate() error {
+	for _,s := range *m {
+		if err := s.Validate(); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -21,11 +26,11 @@ func (m *specialty) Validate() error {
 		return ErrInvalidInput
 	}
 
-	if m.Name == "" || len(m.Name) > 100 {
+	if m.Name == "" || len(m.Name) > 200 {
 		return ErrInvalidInput
 	}
 
-	if m.ShortName == "" || len(m.ShortName) > 3 {
+	if m.ShortName == "" || len(m.ShortName) > 8 {
 		return ErrInvalidInput
 	}
 	return nil
@@ -37,7 +42,7 @@ type SpecService struct {
 
 func NewSpecService(db *gorm.DB) *SpecService {
 	service := &SpecService{BaseService: NewBaseService(db)}
-	service.preloads = []string{"Groups"}
+	service.preloads = []string{"Groups", "Groups.Teacher", "Groups.Students"}
 
 	return service
 }

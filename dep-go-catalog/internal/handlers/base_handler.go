@@ -23,41 +23,27 @@ func (h *BaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		default:
 			h.get(w, r)
 		}
+	case http.MethodPut:
+		h.put(w, r)
 	default:
 		handleError(w, ErrMetodNotAllowed)
 	}
 }
 
-// func (h *BaseHandler) create(w http.ResponseWriter, r *http.Request) {
-// 	spec := h.Service.NewModel()
-//
-// 	if err := json.NewDecoder(r.Body).Decode(spec); err != nil {
-// 		handleError(w, ErrInvalidData)
-// 		return
-// 	}
-//
-// 	if err := h.Service.Create(r.Context(), spec); err != nil {
-// 		handleError(w, err)
-// 		return
-// 	}
-//
-// 	encode(w, http.StatusCreated, spec)
-// }
-
 func (h *BaseHandler) createBatch(w http.ResponseWriter, r *http.Request) {
-	spec := h.Service.NewModels()
+	m := h.Service.NewModels()
 
-	if err := json.NewDecoder(r.Body).Decode(spec); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(m); err != nil {
 		handleError(w, ErrInvalidData)
 		return
 	}
 
-	if err := h.Service.Create(r.Context(), spec); err != nil {
+	if err := h.Service.Create(r.Context(), m); err != nil {
 		handleError(w, err)
 		return
 	}
 
-	encode(w, http.StatusCreated, spec)
+	encode(w, http.StatusCreated, m)
 }
 
 func (h *BaseHandler) get(w http.ResponseWriter, r *http.Request) {
@@ -67,21 +53,36 @@ func (h *BaseHandler) get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	spec := h.Service.NewModel()
+	m := h.Service.NewModel()
 
-	if err := h.Service.Get(r.Context(), spec, uint(id)); err != nil {
+	if err := h.Service.Get(r.Context(), m, uint(id)); err != nil {
 		handleError(w, err)
 		return
 	}
 
-	encode(w, http.StatusOK, &spec)
+	encode(w, http.StatusOK, &m)
 }
 
 func (h *BaseHandler) getAll(w http.ResponseWriter, r *http.Request) {
-	specs := h.Service.NewModels()
-	if err := h.Service.GetAll(r.Context(), specs); err != nil {
+	m := h.Service.NewModels()
+	if err := h.Service.GetAll(r.Context(), m); err != nil {
 		handleError(w, err)
 		return
 	}
-	encode(w, http.StatusOK, specs)
+	encode(w, http.StatusOK, m)
+}
+
+func (h *BaseHandler) put(w http.ResponseWriter, r *http.Request) {
+	m := h.Service.NewModel()
+
+	if err := json.NewDecoder(r.Body).Decode(m); err != nil {
+		handleError(w, ErrInvalidData)
+		return
+	}
+
+	if err := h.Service.Update(r.Context(), m); err != nil {
+		handleError(w, err)
+	}
+
+	encode(w, http.StatusOK, m)
 }

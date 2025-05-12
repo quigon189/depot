@@ -1,5 +1,4 @@
 from flask import flash, redirect, render_template, url_for
-import requests
 from app.main import main_bp
 from app.require import jwt_required
 from app.main import services
@@ -344,11 +343,9 @@ def create_class():
 def edit_specialty(id):
     form = SpecialityForm()
 
-    specialty = services.get_specialty(id)['item']
-
     if form.validate_on_submit():
         spec = {
-                'id': specialty['id'],
+                'id': id,
                 'code': form.code.data,
                 'name': form.name.data,
                 'short_name': form.short_name.data
@@ -359,6 +356,8 @@ def edit_specialty(id):
         else:
             flash(f"Ошибка обновления: код {response.status_code} ошибка {response.json()}")
         return redirect(url_for('main.specialties'))
+
+    specialty = services.get_specialty(id)['item']
 
     form.code.data = specialty['code']
     form.name.data = specialty['name']
@@ -387,13 +386,11 @@ def edit_group(id):
         (t['id'], f"{t['last_name']} {t['first_name'][0]}. {t['middle_name'][0]}.") for t in teachers
     ]
 
-    group = services.get_group(id)['item']
-
     if form.validate_on_submit():
         g = {
-                'id': group['id'],
-                'number': int(form.number.data),
-                'year_formed': int(form.year_formed.data),
+                'id': id,
+                'number': int(form.number.data) if form.number.data else 0,
+                'year_formed': int(form.year_formed.data) if form.year_formed.data else 0,
                 'spec_id': int(form.spec_id.data),
                 'class_teacher_id': int(form.class_teacher_id.data)
                 }
@@ -404,16 +401,139 @@ def edit_group(id):
             flash(f"Ошибка обновления: код {response.status_code} ошибка {response.json()}")
         return redirect(url_for('main.groups'))
 
+    group = services.get_group(id)['item']
+
     form.number.data = group['number']
     form.year_formed.data = group['year_formed']
-    form.spec_id.default = group['spec_id']
-    form.class_teacher_id.default = group['class_teacher_id']
+    form.spec_id.data = str(group['spec_id'])
+    form.class_teacher_id.data = str(group['class_teacher_id'])
 
     return render_template(
         'control/form.html',
         header='Изменить группу',
         form=form,
         entity_type='groups',
+    )
+
+
+@main_bp.route('/students/<int:id>/edit', methods=['GET', 'POST'])
+@jwt_required
+def edit_student(id):
+    form = StudentForm()
+
+    groups = services.get_groups()['items']
+    form.group_id.choices = [ (g['id'], g['name']) for g in groups ]
+
+    if form.validate_on_submit():
+        s = {
+                'id': id,
+                'last_name': form.last_name.data,
+                'first_name': form.first_name.data,
+                'middle_name': form.middle_name.data,
+                'birth_date': form.birth_date.data,
+                'phone': form.phone.data,
+                'group_id': int(form.group_id.data)
+                }
+        response = services.update_entity(s, 'students')
+        if response.status_code == 200:
+            flash(f"Студент {s['last_name']} {s['first_name'][0]}. {s['middle_name'][0]}. обновлен")
+        else:
+            flash(f"Ошибка обновления: код {response.status_code} ошибка {response.json()}")
+        return redirect(url_for('main.students'))
+
+    student = services.get_student(id)['item']
+
+    form.last_name.data = student['last_name']
+    form.first_name.data = student['first_name']
+    form.middle_name.data = student['middle_name']
+    form.birth_date.data = student['birth_date']
+    form.phone.data = student['phone']
+    form.group_id.data = str(student['group_id'])
+
+    return render_template(
+        'control/form.html',
+        header='Изменить студента',
+        form=form,
+        entity_type='students',
+    )
+
+
+@main_bp.route('/teachers/<int:id>/edit', methods=['GET', 'POST'])
+@jwt_required
+def edit_teacher(id):
+    form = TeacherForm()
+
+    if form.validate_on_submit():
+        t = {
+                'id': id,
+                'last_name': form.last_name.data,
+                'first_name': form.first_name.data,
+                'middle_name': form.middle_name.data,
+                'birth_date': form.birth_date.data,
+                'phone': form.phone.data,
+                }
+        response = services.update_entity(t, 'teachers')
+        if response.status_code == 200:
+            flash(f"Преподаватель {t['last_name']} {t['first_name'][0]}. {t['middle_name'][0]}. обновлен")
+        else:
+            flash(f"Ошибка обновления: код {response.status_code} ошибка {response.json()}")
+        return redirect(url_for('main.teachers'))
+
+    teacher = services.get_teacher(id)['item']
+
+    form.last_name.data = teacher['last_name']
+    form.first_name.data = teacher['first_name']
+    form.middle_name.data = teacher['middle_name']
+    form.birth_date.data = teacher['birth_date']
+    form.phone.data = teacher['phone']
+
+    return render_template(
+        'control/form.html',
+        header='Изменить преподавателя',
+        form=form,
+        entity_type='teachers',
+    )
+
+
+@main_bp.route('/disciplines/<int:id>/edit', methods=['GET', 'POST'])
+@jwt_required
+def edit_discipline(id):
+    form = DisciplineForm()
+
+    groups = services.get_groups()['items']
+
+    form.group_id.choices = [ (g['id'], g['name']) for g in groups ]
+
+    if form.validate_on_submit():
+        d = {
+                'id': id,
+                'code': form.code.data,
+                'name': form.name.data,
+                'semester': int(form.semester.data) if form.semester.data else 0,
+                'hours': int(form.hours.data) if form.hours.data else 0,
+                'group_id': int(form.group_id.data)
+                }
+
+        response = services.update_entity(d, 'disciplines')
+        if response.status_code == 200:
+            flash(f"Дисциплина {d['name']} обновленa")
+        else:
+            flash(f"Ошибка обновления: код {response.status_code}")
+        return redirect(url_for('main.disciplines'))
+
+    discipline = services.get_discipline(id)['item']
+
+    form.code.data = discipline['code']
+    form.name.data = discipline['name']
+    form.semester.data = discipline['semester']
+    form.hours.data = discipline['hours']
+    form.group_id.data = str(discipline['group_id'])
+
+    return render_template(
+        'control/form.html',
+        header='Изменить дисциплину',
+        form=form,
+        entity_type='disciplines',
     )
 
 

@@ -25,6 +25,8 @@ func (h *BaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	case http.MethodPut:
 		h.put(w, r)
+	case http.MethodDelete:
+		h.delete(w,r)
 	default:
 		handleError(w, ErrMetodNotAllowed)
 	}
@@ -82,6 +84,29 @@ func (h *BaseHandler) put(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.Service.Update(r.Context(), m); err != nil {
 		handleError(w, err)
+		return
+	}
+
+	encode(w, http.StatusOK, m)
+}
+
+func (h *BaseHandler) delete(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(r.PathValue("id"), 10, 0)
+	if err != nil {
+		handleError(w, ErrInvalidData)
+		return
+	}
+
+	m := h.Service.NewModel()
+
+	if err := h.Service.Get(r.Context(), m, uint(id)); err != nil {
+		handleError(w, err)
+		return
+	}
+
+	if err := h.Service.Delete(r.Context(), m); err != nil {
+		handleError(w, err)
+		return
 	}
 
 	encode(w, http.StatusOK, m)

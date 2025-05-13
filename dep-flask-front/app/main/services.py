@@ -80,13 +80,19 @@ def get_groups():
         groups = []
 
     for group in groups:
-        group['name'] = f"{group['specialty']['short_name']}-{group['number']}"
+        if 'specialty' in group:
+            group['name'] = f"{group['specialty']['short_name']}-{group['number']}"
+        else:
+            group['name'] = group['number']
         group["class_teacher"] = f"{group['class_teacher']['last_name']} {group['class_teacher']['first_name'][0]}. {group['class_teacher']['middle_name'][0]}."
         if 'students' in group:
             group['students_count'] = len(group['students'])
         else:
             group['students_count'] = 0
-        group['specialty'] = f"{group['specialty']['code']} {group['specialty']['name']}"
+        if 'specialty' in group:
+            group['specialty'] = f"{group['specialty']['code']} {group['specialty']['name']}"
+        else:
+            group['specialty'] = "-"
 
     fields = [
         {'key': 'name', 'label': 'Наименование', 'link': True},
@@ -334,6 +340,7 @@ def get_class(id):
         return {'item': {}, 'fields': [], 'nested': []}
 
     cl['name'] = f"{cl['number']} \"{cl['name']}\""
+    cl['class_teacher'] = f"{cl['teacher']['last_name']} {cl['teacher']['first_name'][0]}. {cl['teacher']['middle_name'][0]}."
 
     fields = [
         {'key': 'class_teacher', 'label': 'Заведующий'},
@@ -466,3 +473,13 @@ def update_entity(entity, entity_type):
     }
 
     return requests.put(url, json=entity, headers=headers)
+
+
+def delete_entity(entity, entity_type):
+    url = f"{CATALOG}/{entity_type}/{entity['id']}"
+
+    headers = {
+        'Content-Type': 'application/json'
+    }
+
+    return requests.delete(url, headers=headers)

@@ -16,6 +16,7 @@ type Service interface {
 	Get(ctx context.Context, model any, id uint) error
 	GetAll(ctx context.Context, models any) error
 	Update(ctx context.Context, model ServiceModel) error
+	Delete(ctx context.Context, model ServiceModel) error
 }
 
 type ServiceModel interface {
@@ -77,4 +78,8 @@ func (s *BaseService) Update(ctx context.Context, model ServiceModel) error {
 	}
 
 	return s.db.WithContext(ctx).Save(model).Error
+}
+
+func (s *BaseService) Delete(ctx context.Context, model ServiceModel) error {
+	return s.db.WithContext(ctx).Delete(model).Error
 }

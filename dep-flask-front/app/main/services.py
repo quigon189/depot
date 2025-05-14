@@ -1,7 +1,29 @@
+from typing import Dict, List
 import requests
 from app.main.models import SpecialtyWithGroups
 
 CATALOG = "http://go-catalog:8080/"
+
+class Presenter:
+    """Представление сущностей для отображения в шаблонах"""
+    @staticmethod
+    def specialty_fields() -> List[Dict]:
+        return [
+            {'key': 'code', 'label': 'Код', 'link': True},
+            {'key': 'name', 'label': 'Наименование'},
+            {'key': 'short_name', 'label': 'Короткое обозначение'},
+            {'key': 'groups_count', 'label': 'Количество групп'}
+        ]
+
+
+    @staticmethod
+    def specialty_items(specialtys: List[SpecialtyWithGroups]) -> List[Dict]:
+        return [
+            {
+                'id': s.id
+            }
+            for s in specialtys
+        ]
 
 
 def get_specialties():

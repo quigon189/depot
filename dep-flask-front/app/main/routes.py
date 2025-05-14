@@ -3,6 +3,7 @@ from app.main import main_bp
 from app.require import jwt_required
 from app.main import services
 from app.main.forms import SpecialityForm, GroupForm, StudentForm, TeacherForm, DisciplineForm, ClassForm
+import requests
 
 
 @main_bp.route('/index')
@@ -21,6 +22,11 @@ def user():
 @jwt_required
 def specialties():
     specs = services.get_specialties()
+
+    if specs['errors']:
+        for err in specs['errors']:
+            print(err)
+            flash(err)
 
     return render_template(
         'control/list.html',
@@ -613,7 +619,11 @@ def delete_specialty(id):
 @jwt_required
 def delete_group(id):
     group = services.get_group(id)['item']
-    flash(f"Группа \"{group['name']}\" удалена")
+    response = services.delete_entity(group, 'groups')
+    if response.status_code == 200:
+        flash(f"Группа \"{group['name']}\" удалена")
+    else:
+        flash(f"Ошибка удаления: код {response.status_code}")
     return redirect(url_for('main.groups'))
 
 
@@ -621,7 +631,11 @@ def delete_group(id):
 @jwt_required
 def delete_student(id):
     student = services.get_student(id)['item']
-    flash(f"Студент \"{student['name']}\" удален(а)")
+    response = services.delete_entity(student, 'students')
+    if response.status_code == 200:
+        flash(f"Студент \"{student['name']}\" удален(а)")
+    else:
+        flash(f"Ошибка удаления: код {response.status_code}")
     return redirect(url_for('main.students'))
 
 
@@ -629,7 +643,11 @@ def delete_student(id):
 @jwt_required
 def delete_teacher(id):
     teacher = services.get_teacher(id)['item']
-    flash(f"Преподаватель \"{teacher['name']}\" удален(а)")
+    response = services.delete_entity(teacher, 'teachers')
+    if response.status_code == 200:
+        flash(f"Преподаватель \"{teacher['name']}\" удален(а)")
+    else:
+        flash(f"Ошибка удаления: код {response.status_code}")
     return redirect(url_for('main.teachers'))
 
 
@@ -637,7 +655,11 @@ def delete_teacher(id):
 @jwt_required
 def delete_discipline(id):
     discipline = services.get_discipline(id)['item']
-    flash(f"Дисциплина \"{discipline['name']}\" удалена")
+    response = services.delete_entity(discipline, 'disciplines')
+    if response.status_code == 200:
+        flash(f"Дисциплина \"{discipline['name']}\" удалена")
+    else:
+        flash(f"Ошибка удаления: код {response.status_code}")
     return redirect(url_for('main.disciplines'))
 
 
@@ -645,5 +667,9 @@ def delete_discipline(id):
 @jwt_required
 def delete_class(id):
     cl = services.get_class(id)['item']
-    flash(f"Аудитория \"{cl['name']}\" удалена")
+    response = services.delete_entity(cl, 'classes')
+    if response.status_code == 200:
+        flash(f"Аудитория \"{cl['name']}\" удалена")
+    else:
+        flash(f"Ошибка удаления: код {response.status_code}")
     return redirect(url_for('main.classes'))

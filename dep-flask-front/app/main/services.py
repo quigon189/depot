@@ -1,20 +1,21 @@
 import requests
+from app.main.models import SpecialtyWithGroups
 
 CATALOG = "http://go-catalog:8080/"
 
 
 def get_specialties():
+    errors = []
+    specs = []
     resp = requests.get(f"{CATALOG}/specialties/all")
-    if resp.status_code == 200:
-        specs = resp.json()
+    if resp.status_code != 200:
+        errors.append(f"Ошибка запроса к API. Код ответа {resp.status_code}")
     else:
-        specs = []
-
-    for spec in specs:
-        if 'groups' in spec:
-            spec['groups_count'] = len(spec['groups'])
-        else:
-            spec['groups_count'] = 0
+        for item in resp.json():
+            try:
+                specs.append(SpecialtyWithGroups(**item))
+            except ValueError as e:
+                errors.append(f"Ошибка валидации: {e}")
 
     fields = [
         {'key': 'code', 'label': 'Код', 'link': True},
@@ -22,9 +23,11 @@ def get_specialties():
         {'key': 'short_name', 'label': 'Короткое обозначение'},
         {'key': 'groups_count', 'label': 'Количество групп'}
     ]
+
     return {
         'items': specs,
-        'fields': fields
+        'fields': fields,
+        'errors': errors
     }
 
 

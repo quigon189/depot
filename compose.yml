@@ -1,5 +1,6 @@
 services:
   flask-front:
+    restart: always
     build: ./dep-flask-front/
     volumes:
       - ./dep-flask-front/app:/app/app

@@ -2,6 +2,10 @@ services:
   flask-front:
     restart: always
     build: ./dep-flask-front/
+    logging:
+      driver: "json-file"
+      options:
+        path: ./logs/flask-front.log
     volumes:
       - ./dep-flask-front/app:/app/app
     env_file:
@@ -14,6 +18,10 @@ services:
   go-auth:
     build: ./dep-go-auth/
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        path: ./logs/go-auth.log
     env_file:
       - ./.env
     ports:
@@ -26,6 +34,10 @@ services:
   go-catalog:
     build: ./dep-go-catalog/
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        path: ./logs/go-catalog.log
     env_file:
       - ./.env
     ports:

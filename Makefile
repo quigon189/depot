@@ -5,7 +5,8 @@ run: #Запуск сервисов (по условию в режиме DEV)
 	./run.sh $(ENV)
 
 stop:
-	podman-compose down
+	@podman-compose down > /dev/null
+	@echo "Контейнеры удалены"
 
 build:
 ifeq ($(ENV), DEV)

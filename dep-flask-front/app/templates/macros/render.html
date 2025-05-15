@@ -47,7 +47,7 @@
 
 		{% for nested_entity in nested %}
 		<h5>{{ nested_entity.label }}</h5>
-		{{ table(nested_entity['items'], nested_entity.fields, nested_entity.type) }}
+		{{ table(nested_entity['items'], nested_entity.fields, nested_entity.entity) }}
 		{% endfor %}
 	</div>
 </div>

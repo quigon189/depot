@@ -18,6 +18,14 @@ class Teacher(BaseModel):
     birth_date: str
     phone: str
 
+    @property
+    def name(self) -> str:
+        return "{} {} {}".format(
+            self.last_name,
+            self.first_name,
+            self.middle_name
+        )
+
 
 class Group(BaseModel):
     id: int
@@ -27,11 +35,39 @@ class Group(BaseModel):
     spec_id: int
 
     class_teacher_id: int
-    class_teacher: Teacher
+
+    @property
+    def name(self) -> str:
+        return f"{self.number}"
 
 
 class GroupWithSpecialty(Group):
     specialty: Specialty
+
+    @property
+    def name(self) -> str:
+        if self.specialty:
+            return f"{self.specialty.short_name}-{self.number}"
+        return f"{self.number}"
+
+    @property
+    def specialty_name(self) -> str:
+        return "{} {}".format(
+            self.specialty.code,
+            self.specialty.name
+        )
+
+
+class GroupWithTeacher(GroupWithSpecialty):
+    class_teacher: Teacher
+
+    @property
+    def class_teacher_name(self) -> str:
+        return "{} {}. {}.".format(
+            self.class_teacher.last_name,
+            self.class_teacher.first_name[0],
+            self.class_teacher.middle_name[0]
+        )
 
 
 class Student(BaseModel):
@@ -43,7 +79,22 @@ class Student(BaseModel):
     phone: str
 
     group_id: int
+
+    @property
+    def name(self) -> str:
+        return "{} {} {}".format(
+            self.last_name,
+            self.first_name,
+            self.middle_name
+        )
+
+
+class StudentWithGroup(Student):
     group: GroupWithSpecialty
+
+    @property
+    def group_name(self) -> str:
+        return self.group.name
 
 
 class Discipline(BaseModel):
@@ -55,6 +106,14 @@ class Discipline(BaseModel):
 
     group_id: int
     group: GroupWithSpecialty
+
+    @property
+    def view_name(self) -> str:
+        return f"{self.code}.{self.name}"
+
+    @property
+    def group_name(self) -> str:
+        return self.group.name
 
 
 class Classroom(BaseModel):
@@ -68,6 +127,14 @@ class Classroom(BaseModel):
     teacher_id: int
     teacher: Teacher
 
+    @property
+    def class_teacher_name(self) -> str:
+        return "{} {}. {}.".format(
+            self.teacher.last_name,
+            self.teacher.first_name[0],
+            self.teacher.middle_name[0]
+        )
+
 
 class SpecialtyWithGroups(Specialty):
     groups: List[Group] = []
@@ -77,5 +144,13 @@ class SpecialtyWithGroups(Specialty):
         return len(self.groups)
 
 
+class GroupWithStudents(GroupWithTeacher):
+    students: List[Student] = []
+
+    @property
+    def students_count(self) -> int:
+        return len(self.students) if self.students else 0
+
+
 class TeacherWitGroups(Teacher):
-    groups: List[Group] = []
+    groups: List[GroupWithSpecialty] = []

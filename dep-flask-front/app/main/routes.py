@@ -2,8 +2,11 @@ from flask import flash, redirect, render_template, url_for
 from app.main import main_bp
 from app.require import jwt_required
 from app.main import services
-from app.main.forms import SpecialityForm, GroupForm, StudentForm, TeacherForm, DisciplineForm, ClassForm
-import requests
+from app.main.forms import SpecialityForm, GroupForm, StudentForm, TeacherForm
+from app.main.forms import DisciplineForm, ClassForm
+
+
+CATALOG = "http://go-catalog:8080"
 
 
 @main_bp.route('/index')
@@ -21,102 +24,81 @@ def user():
 @main_bp.route('/specialties')
 @jwt_required
 def specialties():
-    specs = services.get_specialties()
+    specialties = services.get_specialties(CATALOG)
 
-    if specs['errors']:
-        for err in specs['errors']:
-            print(err)
-            flash(err)
+    for err in specialties.errors:
+        flash(err)
 
-    return render_template(
-        'control/list.html',
-        header='Специальности',
-        fields=specs['fields'],
-        items=specs['items'],
-        entity_type='specialties'
-    )
+    return render_template('control/list.html', presenter=specialties)
 
 
 @main_bp.route('/groups')
 @jwt_required
 def groups():
-    groups = services.get_groups()
+    groups = services.get_groups(CATALOG)
 
-    return render_template(
-        'control/list.html',
-        header='Группы',
-        fields=groups['fields'],
-        items=groups['items'],
-        entity_type='groups'
-    )
+    for error in groups.errors:
+        flash(error)
+
+    return render_template('control/list.html', presenter=groups)
 
 
 @main_bp.route('/students')
 @jwt_required
 def students():
-    students = services.get_students()
+    students = services.get_students(CATALOG)
 
-    return render_template(
-        'control/list.html',
-        header='Студенты',
-        fields=students['fields'],
-        items=students['items'],
-        entity_type='students'
-    )
+    for error in students.errors:
+        flash(error)
+
+    return render_template('control/list.html', presenter=students)
 
 
 @main_bp.route('/teachers')
 @jwt_required
 def teachers():
-    teachers = services.get_teachers()
+    teachers = services.get_teachers(CATALOG)
 
-    return render_template(
-        'control/list.html',
-        header='Преподаватели',
-        fields=teachers['fields'],
-        items=teachers['items'],
-        entity_type='teachers'
-    )
+    for error in teachers.errors:
+        flash(error)
+
+    return render_template('control/list.html', presenter=teachers)
 
 
 @main_bp.route('/disciplines')
 @jwt_required
 def disciplines():
-    disciplines = services.get_disciplines()
+    disciplines = services.get_disciplines(CATALOG)
 
-    return render_template(
-        'control/list.html',
-        header='Дисциплины',
-        fields=disciplines['fields'],
-        items=disciplines['items'],
-        entity_type='disciplines'
-    )
+    for error in disciplines.errors:
+        flash(error)
+
+    return render_template('control/list.html', presenter=disciplines)
 
 
 @main_bp.route('/classes')
 @jwt_required
 def classes():
-    classes = services.get_classes()
+    classes = services.get_classes(CATALOG)
 
-    return render_template(
-        'control/list.html',
-        header='Аудитории',
-        fields=classes['fields'],
-        items=classes['items'],
-        entity_type='classes'
-    )
+    for error in classes.errors:
+        flash(error)
+
+    return render_template('control/list.html', presenter=classes)
 
 
 @main_bp.route('/specialties/<int:id>')
 @jwt_required
 def specialty_info(id):
-    specialty = services.get_specialty(id)
+    specialty = services.get_specialty(CATALOG, id)
+    groups = services.get_groups("")
+    services.get_entity_from_entity(specialty, groups)
 
     return render_template(
         'control/view.html',
-        fields=specialty['fields'],
-        item=specialty['item'],
-        nested=specialty['nested']
+        fields=specialty.fields,
+        item=specialty.items[0],
+        nested=groups
     )
 
 
@@ -564,10 +546,10 @@ def edit_class(id):
 
     form.teacher_id.choices = [(t['id'], t['name']) for t in teachers]
     form.type.choices = [
-            ('Кабинет', 'Кабинет'),
-            ('Лаборатория', 'Лаборатория'),
-            ('Полигон', 'Полигон'),
-            ]
+        ('Кабинет', 'Кабинет'),
+        ('Лаборатория', 'Лаборатория'),
+        ('Полигон', 'Полигон'),
+    ]
 
     if form.validate_on_submit():
         c = {

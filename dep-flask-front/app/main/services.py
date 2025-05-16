@@ -1,9 +1,9 @@
-from typing import Dict, List, Optional
+from typing import List
 from pydantic import BaseModel
 import requests
-from app.main.models import SpecialtyWithGroups, GroupWithStudents
-from app.main.models import StudentWithGroup, Teacher, Discipline
-from app.main.models import Classroom
+from app.main.models import BaseEntity, Specialty, Group, Student
+from app.main.models import Teacher, Discipline, Classroom
+
 
 CATALOG = "http://go-catalog:8080/"
 
@@ -11,160 +11,182 @@ CATALOG = "http://go-catalog:8080/"
 class Presenter:
     """Базовый класс представленний сущностей для отображения в шаблонах"""
 
-    def __init__(self, model_type: type, api_path: str):
-        self.type = model_type
-        self.items: List[BaseModel] = []
-        self.nested: List[Presenter] = []
+    def __init__(self):
+        self.type: type
+        self.items: List[BaseEntity] = []
         self.errors: List[str] = []
-        self.fields: List[Dict] = []
-        self.label: str = "Заголовок"
-        self.entity: str = "index"
-        if api_path:
-            get_entity(self, api_path)
 
-    def set_entity(self, entity: str):
-        self.entity = entity
-
-    def set_header(self, label: str):
-        self.label = label
-
-    def set_fields(self, fields: List[Dict]):
-        self.fields = fields
-
-    def add_item(self, item: BaseModel):
+    def add_item(self, item: BaseEntity):
         self.items.append(item)
-
-    def add_nested_items(self, p):
-        self.nested.append(p)
 
     def add_error(self, error: str):
         self.errors.append(error)
 
-
-def get_entity(presenter: Presenter, api_path: str):
-    resp = requests.get(api_path)
-    if resp.status_code == 200:
-        data = resp.json()
-        if isinstance(data, list):
-            for item in data:
+    def get_items(self, api_path: str):
+        resp = requests.get(api_path)
+        if resp.status_code == 200:
+            data = resp.json()
+            if isinstance(data, list):
+                for item in data:
+                    try:
+                        self.add_item(self.type(**item))
+                    except ValueError as e:
+                        print(f"Ошибка валидации {e}")
+                        self.add_error(f"Ошибка валидации {e}")
+            elif isinstance(data, dict):
                 try:
-                    presenter.add_item(presenter.type(**item))
+                    self.add_item(self.type(**data))
                 except ValueError as e:
                     print(f"Ошибка валидации {e}")
-                    presenter.add_error(f"Ошибка валидации {e}")
-        elif isinstance(data, dict):
-            try:
-                presenter.add_item(presenter.type(**data))
-            except ValueError as e:
-                print(f"Ошибка валидации {e}")
-                presenter.add_error(f"Ошибка валидации {e}")
-    else:
-        print(f"Ошибка запроса к API. Код ответа {resp.status_code}")
-        presenter.add_error(
-            f"Ошибка запроса к API. Код ответа {resp.status_code}")
+                    self.add_error(f"Ошибка валидации {e}")
+        else:
+            print(f"Ошибка запроса к API. Код ответа {resp.status_code}")
+            self.add_error(
+                f"Ошибка запроса к API. Код ответа {resp.status_code}")
+
+        return self
 
 
-def get_entity_from_entity(presenter_in: Presenter, presenter_out: Presenter):
-    item = presenter_in.items[0].model_dump()
-    for i in item[presenter_out.entity]:
-        presenter_out.add_item(i)
+class PresenterField:
+
+    def __init__(self, key: str, label: str, link: bool = False):
+        self.key = key
+        self.label = label
+        self.link = link
 
 
-def get_specialties(api_url: str) -> Presenter:
-    specs = Presenter(SpecialtyWithGroups, f"{api_url}/specialties/all")
-    specs.set_header("Специальности")
-    specs.set_entity("specialties")
-    specs.set_fields(
-        [
-            {'key': 'code', 'label': 'Код', 'link': True},
-            {'key': 'name', 'label': 'Наименование'},
-            {'key': 'short_name', 'label': 'Короткое обозначение'},
-            {'key': 'groups_count', 'label': 'Количество групп'}
-        ]
-    )
-    return specs
-
-
-def get_specialty(api_url: str, id: int) -> Presenter:
-    specialties = Presenter(StudentWithGroup, f'{api_url}/specialties/{id}')
-    specialties.set_fields([
-        {'key': 'code', 'label': 'Код'},
-        {'key': 'name', 'label': 'Наименование'},
-        {'key': 'short_name', 'label': 'Короткое обозначение'}
-    ])
-
-    return specialties
-
-
-def get_groups(api_url: str) -> Presenter:
-    groups = Presenter(GroupWithStudents, f'{api_url}/groups/all')
-    groups.set_header('Группы')
-    groups.set_entity('groups')
-    groups.set_fields([
-        {'key': 'name', 'label': 'Наименование', 'link': True},
-        {'key': 'specialty_name', 'label': 'Специальность'},
-        {'key': 'year_formed', 'label': 'Год набора'},
-        {'key': 'class_teacher_name', 'label': 'Классный руководитель'},
-        {'key': 'students_count', 'label': 'Количество студентов'}
-    ])
-
-    return groups
-
-
-def get_group(id):
-    resp = requests.get(f"{CATALOG}/groups/{id}")
-    if resp.status_code == 200:
-        group = resp.json()
-    else:
-        return {'item': {}, 'fields': [], 'nested': []}
-
-    group['name'] = f"{group['specialty']['short_name']}-{group['number']}"
-    group["class_teacher"] = f"{group['class_teacher']['last_name']} {group['class_teacher']['first_name']} {group['class_teacher']['middle_name']}"
-    group['specialty'] = f"{group['specialty']['code']} {group['specialty']['name']}"
-
-    fields = [
-        {'key': 'specialty', 'label': 'Специальность'},
-        {'key': 'year_formed', 'label': 'Год набора'},
-        {'key': 'class_teacher', 'label': 'Классный руководитель'}
+class SpecialtiesPresenter(Presenter):
+    type = Specialty
+    label: str = "Специальности"
+    entity: str = "specialties"
+    fields: List[PresenterField] = [
+        PresenterField('code', 'Код', True),
+        PresenterField('name', 'Наименование'),
+        PresenterField('short_name', 'Короткое обозначение'),
+        PresenterField('groups_count', 'Количество групп')
     ]
 
-    if not ('students' in group):
-        group['students'] = []
+    def get_groups(self) -> "GroupsPresenter":
+        groups = GroupsPresenter()
+        if self.items[0].groups:
+            for g in self.items[0].groups:
+                groups.add_item(g)
+        return groups
 
-    for student in group['students']:
-        student['name'] = f'{student["last_name"]} {student["first_name"]} {student["middle_name"]}'
 
-    nested = [
-        {
-            'label': 'Студенты',
-            'type': 'students',
-            'fields': [
-                {'key': 'name', 'label': 'ФИО', 'link': True},
-                {'key': 'birth_date', 'label': 'День рождения'},
-                {'key': 'phone', 'label': 'Номер телефона'},
-            ],
-            'items': group['students']
-        }
+class GroupsPresenter(Presenter):
+    type = Group
+    label: str = "Группы"
+    entity: str = "groups"
+    fields: List[PresenterField] = [
+        PresenterField('name', 'Наименование', True),
+        PresenterField('specialty_name', 'Специальность'),
+        PresenterField('year_formed', 'Год набора'),
+        PresenterField('class_teacher_name', 'Классный руководитель'),
+        PresenterField('students_count', 'Количество студентов')
     ]
-    return {
-        'item': group,
-        'fields': fields,
-        'nested': nested
-    }
+
+    def get_students(self) -> "StudentsPresenter":
+        students = StudentsPresenter()
+        if self.items[0].students:
+            for s in self.items[0].students:
+                students.add_item(s)
+        return students
+
+    def get_disciplines(self) -> "DisciplinesPresenter":
+        disciplines = DisciplinesPresenter()
+        if self.items[0].disciplines:
+            for d in self.items[0].disciplines:
+                disciplines.add_item(d)
+        return disciplines
 
 
-def get_students(api_url: str) -> Presenter:
-    students = Presenter(StudentWithGroup, f'{api_url}/students/all')
-    students.set_header('Студенты')
-    students.set_entity('students')
-    students.set_fields([
-        {'key': 'name', 'label': 'ФИО', 'link': True},
-        {'key': 'group_name', 'label': 'Номер группы'},
-        {'key': 'birth_date', 'label': 'Дата рождения'},
-        {'key': 'phone', 'label': 'Номер телефона'}
-    ])
+class StudentsPresenter(Presenter):
+    type = Student
+    label: str = "Студенты"
+    entity: str = "students"
+    fields: List[PresenterField] = [
+        PresenterField('name', 'ФИО', True),
+        PresenterField('group_name', 'Группа'),
+        PresenterField('birth_date', 'Дата рождения'),
+        PresenterField('phone', 'Номер телефона'),
+    ]
 
-    return students
+
+class TeachersPresenter(Presenter):
+    type = Teacher
+    label: str = "Преподаватели"
+    entity: str = "teachers"
+    fields: List[PresenterField] = [
+        PresenterField('name', 'ФИО', True),
+        PresenterField('birth_date', 'Дата рождения'),
+        PresenterField('phone', 'Номер телефона'),
+    ]
+
+
+class DisciplinesPresenter(Presenter):
+    type = Discipline
+    label: str = "Дисциплины"
+    entity: str = "disciplines"
+    fields: List[PresenterField] = [
+        PresenterField('view_name', 'Название', True),
+        PresenterField('group_name', 'Группа'),
+        PresenterField('semester', 'Семестер'),
+        PresenterField('hours', 'Нагрузка'),
+    ]
+
+
+class ClassesPresenter(Presenter):
+    type = Classroom
+    label: str = "Аудитории"
+    entity: str = "classes"
+    fields: List[PresenterField] = [
+            PresenterField('number', 'Номер', True),
+            PresenterField('name', 'Название'),
+            PresenterField('class_teacher_name', 'Заведующий'),
+            PresenterField('capacity', 'Вместительность'),
+            PresenterField('equipment', 'Оснащение'),
+            ]
+
+
+def get_specialties(api_url: str) -> SpecialtiesPresenter:
+    api = f"{api_url}/specialties/all"
+    return SpecialtiesPresenter().get_items(api)
+
+
+def get_groups(api_url: str) -> GroupsPresenter:
+    api = f"{api_url}/groups/all"
+    return GroupsPresenter().get_items(api)
+
+
+def get_students(api_url: str) -> StudentsPresenter:
+    api = f"{api_url}/students/all"
+    return StudentsPresenter().get_items(api)
+
+
+def get_teachers(api_url: str) -> TeachersPresenter:
+    api = f'{api_url}/teachers/all'
+    return TeachersPresenter().get_items(api)
+
+
+def get_disciplines(api_url: str) -> DisciplinesPresenter:
+    api = f"{api_url}/disciplines/all"
+    return DisciplinesPresenter().get_items(api)
+
+
+def get_classes(api_url: str) -> ClassesPresenter:
+    api = f"{api_url}/classes/all"
+    return ClassesPresenter().get_items(api)
+
+
+def get_specialty(api_url: str, id: int) -> SpecialtiesPresenter:
+    api = f"{api_url}/specialties/{id}"
+    return SpecialtiesPresenter().get_items(api)
+
+
+def get_group(api_url: str, id: int):
+    api = f"{api_url}/groups/{id}"
+    return GroupsPresenter().get_items(api)
 
 
 def get_student(id):
@@ -188,18 +210,6 @@ def get_student(id):
         'fields': fields,
         'nested': []
     }
-
-
-def get_teachers(api_url: str) -> Presenter:
-    teachers = Presenter(Teacher, f'{api_url}/teachers/all')
-    teachers.set_header('Преподаватели')
-    teachers.set_entity('teachers')
-    teachers.set_fields([
-        {'key': 'name', 'label': 'ФИО', 'link': True},
-        {'key': 'birth_date', 'label': 'Дата рождения'},
-        {'key': 'phone', 'label': 'Номер телефона'}
-    ])
-    return teachers
 
 
 def get_teacher(id):
@@ -241,20 +251,6 @@ def get_teacher(id):
     }
 
 
-def get_disciplines(api_url: str) -> Presenter:
-    disciplines = Presenter(Discipline, f"{api_url}/disciplines/all")
-    disciplines.set_header('Дисциплины')
-    disciplines.set_entity('disciplines')
-    disciplines.set_fields([
-        {'key': 'view_name', 'label': 'Наименование', 'link': True},
-        {'key': 'group_name', 'label': 'Номер группы'},
-        {'key': 'semester', 'label': 'Семестр'},
-        {'key': 'hours', 'label': 'Нагрузка'},
-    ])
-
-    return disciplines
-
-
 def get_discipline(id):
     resp = requests.get(f"{CATALOG}/disciplines/{id}")
     if resp.status_code == 200:
@@ -278,21 +274,6 @@ def get_discipline(id):
         'fields': fields,
         'nested': nested
     }
-
-
-def get_classes(api_url: str) -> Presenter:
-    classes = Presenter(Classroom, f"{api_url}/classes/all")
-    classes.set_header('Аудитории')
-    classes.set_entity('classes')
-    classes.set_fields([
-        {'key': 'number', 'label': 'Номер', 'link': True},
-        {'key': 'name', 'label': 'Наименование'},
-        {'key': 'class_teacher_name', 'label': 'Заведующий'},
-        {'key': 'capacity', 'label': 'Вместительность'},
-        {'key': 'equipment', 'label': 'Оснащение'},
-    ])
-
-    return classes
 
 
 def get_class(id):

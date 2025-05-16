@@ -2,6 +2,6 @@
 {% extends 'base.html' %}
 {% block content %}
 
-{{ render.card(item, fields, nested) }}
+{{ render.card(presenter.items[0], presenter.fields, nested) }}
 
 {% endblock %}

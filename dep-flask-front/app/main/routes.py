@@ -91,27 +91,29 @@ def classes():
 @jwt_required
 def specialty_info(id):
     specialty = services.get_specialty(CATALOG, id)
-    groups = services.get_groups("")
-    services.get_entity_from_entity(specialty, groups)
+
+    for error in specialty.errors:
+        flash(error)
 
     return render_template(
         'control/view.html',
-        fields=specialty.fields,
-        item=specialty.items[0],
-        nested=groups
+        presenter=specialty,
+        nested=[specialty.get_groups()]
     )
 
 
 @main_bp.route('/groups/<int:id>')
 @jwt_required
 def group_info(id):
-    group = services.get_group(id)
+    group = services.get_group(CATALOG, id)
+
+    for error in group.errors:
+        flash(error)
 
     return render_template(
         'control/view.html',
-        fields=group['fields'],
-        item=group['item'],
-        nested=group['nested']
+        presenter=group,
+        nested=[group.get_students(), group.get_disciplines()]
     )
 
 

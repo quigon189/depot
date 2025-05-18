@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Type
 from pydantic import BaseModel
 import requests
 from app.main.models import BaseEntity, Specialty, Group, Student
@@ -21,6 +21,14 @@ class Presenter:
 
     def add_error(self, error: str):
         self.errors.append(error)
+
+    def get_nested(self, cls: Type['Presenter'], attribute: str) -> 'Presenter':
+        nested = cls()
+        nested_items = getattr(self.items[0], attribute)
+        if nested_items:
+            for item in nested_items:
+                nested.add_item(item)
+        return nested
 
     def get_items(self, api_path: str):
         resp = requests.get(api_path)
@@ -66,13 +74,6 @@ class SpecialtiesPresenter(Presenter):
         PresenterField('groups_count', 'Количество групп')
     ]
 
-    def get_groups(self) -> "GroupsPresenter":
-        groups = GroupsPresenter()
-        if self.items[0].groups:
-            for g in self.items[0].groups:
-                groups.add_item(g)
-        return groups
-
 
 class GroupsPresenter(Presenter):
     type = Group
@@ -85,20 +86,6 @@ class GroupsPresenter(Presenter):
         PresenterField('class_teacher_name', 'Классный руководитель'),
         PresenterField('students_count', 'Количество студентов')
     ]
-
-    def get_students(self) -> "StudentsPresenter":
-        students = StudentsPresenter()
-        if self.items[0].students:
-            for s in self.items[0].students:
-                students.add_item(s)
-        return students
-
-    def get_disciplines(self) -> "DisciplinesPresenter":
-        disciplines = DisciplinesPresenter()
-        if self.items[0].disciplines:
-            for d in self.items[0].disciplines:
-                disciplines.add_item(d)
-        return disciplines
 
 
 class StudentsPresenter(Presenter):
@@ -184,122 +171,29 @@ def get_specialty(api_url: str, id: int) -> SpecialtiesPresenter:
     return SpecialtiesPresenter().get_items(api)
 
 
-def get_group(api_url: str, id: int):
+def get_group(api_url: str, id: int) -> GroupsPresenter:
     api = f"{api_url}/groups/{id}"
     return GroupsPresenter().get_items(api)
 
 
-def get_student(id):
-    resp = requests.get(f"{CATALOG}/students/{id}")
-    if resp.status_code == 200:
-        student = resp.json()
-    else:
-        return {'item': {}, 'fields': [], 'nested': []}
-
-    student['name'] = f"{student['last_name']} {student['first_name']} {student['middle_name']}"
-    student['group_number'] = f"{student['group']['specialty']['short_name']}-{student['group']['number']}"
-
-    fields = [
-        {'key': 'group_number', 'label': 'Группа'},
-        {'key': 'birth_date', 'label': 'Дата рождения'},
-        {'key': 'phone', 'label': 'Номер телефона'}
-    ]
-
-    return {
-        'item': student,
-        'fields': fields,
-        'nested': []
-    }
+def get_student(api_url: str, id: int) -> StudentsPresenter:
+    api = f"{api_url}/students/{id}"
+    return StudentsPresenter().get_items(api)
 
 
-def get_teacher(id):
-    resp = requests.get(f"{CATALOG}/teachers/{id}")
-    if resp.status_code == 200:
-        teacher = resp.json()
-    else:
-        return {'item': {}, 'fields': [], 'nested': []}
-
-    teacher['name'] = f"{teacher['last_name']} {teacher['first_name']} {teacher['middle_name']}"
-
-    fields = [
-        {'key': 'birth_date', 'label': 'Дата рождения'},
-        {'key': 'phone', 'label': 'Номер телефона'}
-    ]
-
-    if not ('groups' in teacher):
-        teacher['groups'] = []
-
-    for group in teacher['groups']:
-        group['name'] = f"{group['specialty']['short_name']}-{group['number']}"
-
-    nested = [
-        {
-            'label': 'Группы',
-            'type': 'groups',
-            'fields': [
-                {'key': 'name', 'label': 'Наименование', 'link': True},
-                {'key': 'year_formed', 'label': 'Год набора'},
-            ],
-            'items': teacher['groups']
-        }
-    ]
-
-    return {
-        'item': teacher,
-        'fields': fields,
-        'nested': nested
-    }
+def get_teacher(api_url: str, id: int) -> TeachersPresenter:
+    api = f"{api_url}/teachers/{id}"
+    return TeachersPresenter().get_items(api)
 
 
-def get_discipline(id):
-    resp = requests.get(f"{CATALOG}/disciplines/{id}")
-    if resp.status_code == 200:
-        discipline = resp.json()
-    else:
-        return {'item': {}, 'fields': [], 'nested': []}
-
-    discipline['name'] = f"{discipline['code']}.{discipline['name']}"
-    discipline['group_number'] = f"{discipline['group']['specialty']['short_name']}-{discipline['group']['number']}"
-
-    fields = [
-        {'key': 'group_number', 'label': 'Номер группы'},
-        {'key': 'semester', 'label': 'Семестр'},
-        {'key': 'hours', 'label': 'Нагрузка'}
-    ]
-
-    nested = []
-
-    return {
-        'item': discipline,
-        'fields': fields,
-        'nested': nested
-    }
+def get_discipline(api_url: str, id: int):
+    api = f"{api_url}/disciplines/{id}"
+    return DisciplinesPresenter().get_items(api)
 
 
-def get_class(id):
-    resp = requests.get(f"{CATALOG}/classes/{id}")
-    if resp.status_code == 200:
-        cl = resp.json()
-    else:
-        return {'item': {}, 'fields': [], 'nested': []}
-
-    cl['name'] = f"{cl['number']} \"{cl['name']}\""
-    cl['class_teacher'] = f"{cl['teacher']['last_name']} {cl['teacher']['first_name'][0]}. {cl['teacher']['middle_name'][0]}."
-
-    fields = [
-        {'key': 'class_teacher', 'label': 'Заведующий'},
-        {'key': 'type', 'label': 'Тип'},
-        {'key': 'capacity', 'label': 'Вместимтельность'},
-        {'key': 'equipment', 'label': 'Оснащение'}
-    ]
-
-    nested = []
-
-    return {
-        'item': cl,
-        'fields': fields,
-        'nested': nested
-    }
+def get_class(api_url: str, id: str):
+    api = f"{api_url}/classes/{id}"
+    return ClassesPresenter().get_items(api)
 
 
 def send_specialty(form):

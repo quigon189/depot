@@ -98,7 +98,7 @@ def specialty_info(id):
     return render_template(
         'control/view.html',
         presenter=specialty,
-        nested=[specialty.get_groups()]
+        nested=[specialty.get_nested(services.GroupsPresenter, 'groups')]
     )
 
 
@@ -113,61 +113,71 @@ def group_info(id):
     return render_template(
         'control/view.html',
         presenter=group,
-        nested=[group.get_students(), group.get_disciplines()]
+        nested=[
+            group.get_nested(services.StudentsPresenter, 'students'),
+            group.get_nested(services.DisciplinesPresenter, 'disciplines')
+        ]
     )
 
 
 @main_bp.route('/students/<int:id>')
 @jwt_required
 def student_info(id):
-    student = services.get_student(id)
+    student = services.get_student(CATALOG, id)
+
+    for error in student.errors:
+        flash(error)
 
     return render_template(
         'control/view.html',
-        fields=student['fields'],
-        item=student['item'],
-        nested=student['nested']
+        presenter=student,
+        nested=[]
     )
 
 
 @main_bp.route('/teachers/<int:id>')
 @jwt_required
 def teacher_info(id):
-    teacher = services.get_teacher(id)
+    teacher = services.get_teacher(CATALOG, id)
 
     return render_template(
         'control/view.html',
-        fields=teacher['fields'],
-        item=teacher['item'],
-        nested=teacher['nested']
+        presenter=teacher,
+        nested=[
+            teacher.get_nested(services.GroupsPresenter, 'groups'),
+            teacher.get_nested(services.ClassesPresenter, 'classes'),
+            ]
     )
 
 
 @main_bp.route('/disciplines/<int:id>')
 @jwt_required
 def discipline_info(id):
-    discipline = services.get_discipline(id)
+    discipline = services.get_discipline(CATALOG, id)
+
+    for error in discipline.errors:
+        flash(error)
 
     return render_template(
         'control/view.html',
-        fields=discipline['fields'],
-        item=discipline['item'],
-        nested=discipline['nested']
+        presenter=discipline,
+        nested=[]
     )
 
 
 @main_bp.route('/classes/<int:id>')
 @jwt_required
 def class_info(id):
-    cl = services.get_class(id)
+    cl = services.get_class(CATALOG, id)
+
+    for error in cl.errors:
+        flash(error)
 
     return render_template(
         'control/view.html',
-        fields=cl['fields'],
-        item=cl['item'],
-        nested=cl['nested']
-    )
-
+        prsenter=cl,
+        nested=[]
+        )
 
 @main_bp.route('/specialties/create', methods=['GET', 'POST'])
 @jwt_required

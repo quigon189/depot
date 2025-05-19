@@ -60,11 +60,7 @@
 	{% if field.label.text != "CSRF Token" %}
 	<div class="mb-3">
 		{{ field.label(class="form-label") }}
-		{% if field.choices %}
-		{{ field(class="form-select", required="required")}}
-		{% else %}
-		{{ field(class="form-control", required="required")}}
-		{% endif %}
+		{{ field() }}
 	</div>
 	{% endif %}
 	{% endfor %}

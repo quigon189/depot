@@ -3,12 +3,12 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>{{ presenter.label }}</h2>
-<a href="/{{ presenter.entity_type }}/create" class="btn btn-success mb-3">Добавить</a>
+<a href="/{{ presenter.entity }}/create" class="btn btn-success mb-3">Добавить</a>
 
 {{ render.table(presenter.items, presenter.fields, presenter.entity) }}
 
 {% for item in presenter.items %}
-{{ modal.delete(presenter.entity_type, item) }}
+{{ modal.delete(presenter.entity, item) }}
 {% endfor %}
 
 {% endblock %}

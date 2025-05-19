@@ -1,5 +1,8 @@
-from typing import Literal, List, Optional
+from typing import Literal, List, Optional, Union
 from pydantic import BaseModel, Field
+
+Entity = Union['Specialty', 'Group', 'Student',
+               'Teacher', 'Discipline', 'Classroom', 'BaseEntity']
 
 
 class BaseEntity(BaseModel):
@@ -13,6 +16,10 @@ class Specialty(BaseEntity):
     short_name: str = Field(..., max_length=8, examples=["СА"])
 
     groups: Optional[List["Group"]] = None
+
+    @property
+    def view_name(self):
+        return f"{self.code} {self.name}"
 
     @property
     def groups_count(self) -> int:

@@ -146,7 +146,7 @@ def teacher_info(id):
         nested=[
             teacher.get_nested(services.GroupsPresenter, 'groups'),
             teacher.get_nested(services.ClassesPresenter, 'classes'),
-            ]
+        ]
     )
 
 
@@ -175,9 +175,10 @@ def class_info(id):
 
     return render_template(
         'control/view.html',
-        prsenter=cl,
+        presenter=cl,
         nested=[]
-        )
+    )
+
 
 @main_bp.route('/specialties/create', methods=['GET', 'POST'])
 @jwt_required
@@ -185,12 +186,7 @@ def create_specialty():
     form = SpecialityForm()
 
     if form.validate_on_submit():
-        response = services.send_specialty(form)
-        if response.status_code == 201:
-            flash(f"Специальность {form.code.data} добавленна")
-        else:
-            flash(
-                f"Ошибка при добавлении специальности: {response.status_code}")
+        flash(services.send_specialty(CATALOG, form))
         return redirect(url_for('main.specialties'))
 
     return render_template(
@@ -204,25 +200,10 @@ def create_specialty():
 @main_bp.route('/groups/create', methods=['GET', 'POST'])
 @jwt_required
 def create_group():
-    form = GroupForm()
-
-    specialties = services.get_specialties()['items']
-    teachers = services.get_teachers()['items']
-
-    form.spec_id.choices = [
-        (s["id"], f"{s['code']} {s['name']}") for s in specialties
-    ]
-    form.class_teacher_id.choices = [
-        (t['id'], f"{t['last_name']} {t['first_name'][0]}. {t['middle_name'][0]}.") for t in teachers
-    ]
+    form = GroupForm().with_choices(CATALOG)
 
     if form.validate_on_submit():
-        response = services.send_group(form)
-        if response.status_code == 201:
-            flash(f"Группа {form.number.data} добавленна")
-        else:
-            flash(
-                f"Ошибка добавления группы: код {response.status_code} ошибка {response.json()}")
+        flash(services.send_group(CATALOG, form))
         return redirect(url_for('main.groups'))
 
     return render_template(
@@ -236,21 +217,10 @@ def create_group():
 @main_bp.route('/students/create', methods=['GET', 'POST'])
 @jwt_required
 def create_student():
-    form = StudentForm()
-
-    groups = services.get_groups()['items']
-
-    form.group_id.choices = [
-        (g["id"], f"{g['name']}") for g in groups
-    ]
+    form = StudentForm().with_choices(CATALOG)
 
     if form.validate_on_submit():
-        response = services.send_student(form)
-        if response.status_code == 201:
-            flash(f"Студент {form.last_name.data} добавленн")
-        else:
-            flask(
-                f"Ошибка при добавлении: код {response.status_code} ошибка {response.json()}")
+        flash(services.send_student(CATALOG, form))
         return redirect(url_for('main.students'))
 
     return render_template(
@@ -267,12 +237,7 @@ def create_teacher():
     form = TeacherForm()
 
     if form.validate_on_submit():
-        response = services.send_teacher(form)
-        if response.status_code == 201:
-            flash(f"Преподаватель {form.last_name.data} добавлен")
-        else:
-            flask(
-                f"Ошибка при добавлении: код {response.status_code} ошибка {response.json()}")
+        flash(services.send_teacher(CATALOG, form))
         return redirect(url_for('main.teachers'))
 
     return render_template(
@@ -286,21 +251,10 @@ def create_teacher():
 @main_bp.route('/disciplines/create', methods=['GET', 'POST'])
 @jwt_required
 def create_discipline():
-    form = DisciplineForm()
-
-    groups = services.get_groups()['items']
-
-    form.group_id.choices = [
-        (g['id'], g['name']) for g in groups
-    ]
+    form = DisciplineForm().with_choices(CATALOG)
 
     if form.validate_on_submit():
-        response = services.send_discipline(form)
-        if response.status_code == 201:
-            flash(f"Дисциплина {form.name.data} добавленна")
-        else:
-            flash(
-                f"Ошибка при добавлении: код {response.status_code} ошибка {response.json()}")
+        flash(services.send_discipline(CATALOG, form))
         return redirect(url_for('main.disciplines'))
 
     return render_template(
@@ -314,26 +268,10 @@ def create_discipline():
 @main_bp.route('/classes/create', methods=['GET', 'POST'])
 @jwt_required
 def create_class():
-    form = ClassForm()
-
-    teachers = services.get_teachers()['items']
-
-    form.teacher_id.choices = [
-        (t['id'], t['name']) for t in teachers
-    ]
-    form.type.choices = [
-        ('Кабинет', 'Кабинет'),
-        ('Лаборатория', 'Лаборатория'),
-        ('Полигон', 'Полигон')
-    ]
+    form = ClassForm().with_choices(CATALOG)
 
     if form.validate_on_submit():
-        response = services.send_class(form)
-        if response.status_code == 201:
-            flash(f"Аудитория {form.number.data} добавленна")
-        else:
-            flash(
-                f"Ошибка при добавлении: код {response.status_code} ошибка {response.json()}")
+        flash(services.send_class(CATALOG, form))
         return redirect(url_for('main.classes'))
 
     return render_template(
@@ -350,25 +288,14 @@ def edit_specialty(id):
     form = SpecialityForm()
 
     if form.validate_on_submit():
-        spec = {
-            'id': id,
-            'code': form.code.data,
-            'name': form.name.data,
-            'short_name': form.short_name.data
-        }
-        response = services.update_entity(spec, 'specialties')
-        if response.status_code == 200:
-            flash(f"Специальность {spec['code']} {spec['name']} обновленна")
-        else:
-            flash(
-                f"Ошибка обновления: код {response.status_code} ошибка {response.json()}")
+        flash(services.update_specialty(CATALOG, id, form))
         return redirect(url_for('main.specialties'))
 
-    specialty = services.get_specialty(id)['item']
+    specialty = services.get_specialty(CATALOG, id).items[0]
 
-    form.code.data = specialty['code']
-    form.name.data = specialty['name']
-    form.short_name.data = specialty['short_name']
+    form.code.data = specialty.code
+    form.name.data = specialty.name
+    form.short_name.data = specialty.short_name
 
     return render_template(
         'control/form.html',
@@ -381,40 +308,18 @@ def edit_specialty(id):
 @main_bp.route('/groups/<int:id>/edit', methods=['GET', 'POST'])
 @jwt_required
 def edit_group(id):
-    form = GroupForm()
-
-    specialties = services.get_specialties()['items']
-    teachers = services.get_teachers()['items']
-
-    form.spec_id.choices = [
-        (s["id"], f"{s['code']} {s['name']}") for s in specialties
-    ]
-    form.class_teacher_id.choices = [
-        (t['id'], f"{t['last_name']} {t['first_name'][0]}. {t['middle_name'][0]}.") for t in teachers
-    ]
+    form = GroupForm().with_choices(CATALOG)
 
     if form.validate_on_submit():
-        g = {
-            'id': id,
-            'number': int(form.number.data) if form.number.data else 0,
-            'year_formed': int(form.year_formed.data) if form.year_formed.data else 0,
-            'spec_id': int(form.spec_id.data),
-            'class_teacher_id': int(form.class_teacher_id.data)
-        }
-        response = services.update_entity(g, 'groups')
-        if response.status_code == 200:
-            flash(f"Группа {g['number']} обновлена")
-        else:
-            flash(
-                f"Ошибка обновления: код {response.status_code} ошибка {response.json()}")
+        flash(services.update_group(CATALOG, id, form))
         return redirect(url_for('main.groups'))
 
-    group = services.get_group(id)['item']
+    group = services.get_group(CATALOG, id).items[0]
 
-    form.number.data = group['number']
-    form.year_formed.data = group['year_formed']
-    form.spec_id.data = str(group['spec_id'])
-    form.class_teacher_id.data = str(group['class_teacher_id'])
+    form.number.data = group.number
+    form.year_formed.data = group.year_formed
+    form.spec_id.data = str(group.spec_id)
+    form.class_teacher_id.data = str(group.class_teacher_id)
 
     return render_template(
         'control/form.html',
@@ -427,38 +332,20 @@ def edit_group(id):
 @main_bp.route('/students/<int:id>/edit', methods=['GET', 'POST'])
 @jwt_required
 def edit_student(id):
-    form = StudentForm()
-
-    groups = services.get_groups()['items']
-    form.group_id.choices = [(g['id'], g['name']) for g in groups]
+    form = StudentForm().with_choices(CATALOG)
 
     if form.validate_on_submit():
-        s = {
-            'id': id,
-            'last_name': form.last_name.data,
-            'first_name': form.first_name.data,
-            'middle_name': form.middle_name.data,
-            'birth_date': form.birth_date.data,
-            'phone': form.phone.data,
-            'group_id': int(form.group_id.data)
-        }
-        response = services.update_entity(s, 'students')
-        if response.status_code == 200:
-            flash(
-                f"Студент {s['last_name']} {s['first_name'][0]}. {s['middle_name'][0]}. обновлен")
-        else:
-            flash(
-                f"Ошибка обновления: код {response.status_code} ошибка {response.json()}")
+        flash(services.update_student(CATALOG, id, form))
         return redirect(url_for('main.students'))
 
-    student = services.get_student(id)['item']
+    student = services.get_student(CATALOG, id).items[0]
 
-    form.last_name.data = student['last_name']
-    form.first_name.data = student['first_name']
-    form.middle_name.data = student['middle_name']
-    form.birth_date.data = student['birth_date']
-    form.phone.data = student['phone']
-    form.group_id.data = str(student['group_id'])
+    form.last_name.data = student.last_name
+    form.first_name.data = student.first_name
+    form.middle_name.data = student.middle_name
+    form.birth_date.data = student.birth_date
+    form.phone.data = student.phone
+    form.group_id.data = str(student.group_id)
 
     return render_template(
         'control/form.html',
@@ -474,30 +361,16 @@ def edit_teacher(id):
     form = TeacherForm()
 
     if form.validate_on_submit():
-        t = {
-            'id': id,
-            'last_name': form.last_name.data,
-            'first_name': form.first_name.data,
-            'middle_name': form.middle_name.data,
-            'birth_date': form.birth_date.data,
-            'phone': form.phone.data,
-        }
-        response = services.update_entity(t, 'teachers')
-        if response.status_code == 200:
-            flash(
-                f"Преподаватель {t['last_name']} {t['first_name'][0]}. {t['middle_name'][0]}. обновлен")
-        else:
-            flash(
-                f"Ошибка обновления: код {response.status_code} ошибка {response.json()}")
+        flash(services.update_teacher(CATALOG, id, form))
         return redirect(url_for('main.teachers'))
 
-    teacher = services.get_teacher(id)['item']
+    teacher = services.get_teacher(CATALOG, id).items[0]
 
-    form.last_name.data = teacher['last_name']
-    form.first_name.data = teacher['first_name']
-    form.middle_name.data = teacher['middle_name']
-    form.birth_date.data = teacher['birth_date']
-    form.phone.data = teacher['phone']
+    form.last_name.data = teacher.last_name
+    form.first_name.data = teacher.first_name
+    form.middle_name.data = teacher.middle_name
+    form.birth_date.data = teacher.birth_date
+    form.phone.data = teacher.phone
 
     return render_template(
         'control/form.html',
@@ -510,36 +383,18 @@ def edit_teacher(id):
 @main_bp.route('/disciplines/<int:id>/edit', methods=['GET', 'POST'])
 @jwt_required
 def edit_discipline(id):
-    form = DisciplineForm()
-
-    groups = services.get_groups()['items']
-
-    form.group_id.choices = [(g['id'], g['name']) for g in groups]
-
+    form = DisciplineForm().with_choices(CATALOG)
     if form.validate_on_submit():
-        d = {
-            'id': id,
-            'code': form.code.data,
-            'name': form.name.data,
-            'semester': int(form.semester.data) if form.semester.data else 0,
-            'hours': int(form.hours.data) if form.hours.data else 0,
-            'group_id': int(form.group_id.data)
-        }
-
-        response = services.update_entity(d, 'disciplines')
-        if response.status_code == 200:
-            flash(f"Дисциплина {d['name']} обновленa")
-        else:
-            flash(f"Ошибка обновления: код {response.status_code}")
+        flash(services.update_discipline(CATALOG, id, form))
         return redirect(url_for('main.disciplines'))
 
-    discipline = services.get_discipline(id)['item']
+    discipline = services.get_discipline(CATALOG, id).items[0]
 
-    form.code.data = discipline['code']
-    form.name.data = discipline['name']
-    form.semester.data = discipline['semester']
-    form.hours.data = discipline['hours']
-    form.group_id.data = str(discipline['group_id'])
+    form.code.data = discipline.code
+    form.name.data = discipline.name
+    form.semester.data = discipline.semester
+    form.hours.data = discipline.hours
+    form.group_id.data = str(discipline.group_id)
 
     return render_template(
         'control/form.html',
@@ -552,42 +407,19 @@ def edit_discipline(id):
 @main_bp.route('/classes/<int:id>/edit', methods=['GET', 'POST'])
 @jwt_required
 def edit_class(id):
-    form = ClassForm()
-
-    teachers = services.get_teachers()['items']
-
-    form.teacher_id.choices = [(t['id'], t['name']) for t in teachers]
-    form.type.choices = [
-        ('Кабинет', 'Кабинет'),
-        ('Лаборатория', 'Лаборатория'),
-        ('Полигон', 'Полигон'),
-    ]
-
+    form = ClassForm().with_choices(CATALOG)
     if form.validate_on_submit():
-        c = {
-            'id': id,
-            'number': form.number.data,
-            'name': form.name.data,
-            'type': form.type.data,
-            'capacity': int(form.capacity.data) if form.capacity.data else 0,
-            'equipment': form.equipment.data,
-            'teacher_id': int(form.teacher_id.data)
-        }
-
-        response = services.update_entity(c, 'classes')
-        if response.status_code == 200:
-            flash(f"Аудитория {c['number']} обновленa")
-        else:
-            flash(f"Ошибка обновления: код {response.status_code}")
+        flash(services.update_classroom(CATALOG, id, form))
         return redirect(url_for('main.classes'))
 
-    cl = services.get_class(id)['item']
+    cl = services.get_class(CATALOG, id).items[0]
 
-    form.number.data = cl['number']
-    form.name.data = cl['name']
-    form.type.data = cl['type']
-    form.capacity.data = cl['capacity']
-    form.teacher_id.data = str(cl['teacher_id'])
+    form.number.data = cl.number
+    form.name.data = cl.name
+    form.type.data = cl.type
+    form.capacity.data = cl.capacity
+    form.equipment.data = cl.equipment
+    form.teacher_id.data = str(cl.teacher_id)
 
     return render_template(
         'control/form.html',
@@ -600,70 +432,76 @@ def edit_class(id):
 @main_bp.route('/specialties/<int:id>/delete', methods=['POST'])
 @jwt_required
 def delete_specialty(id):
-    specialty = services.get_specialty(id)['item']
-    response = services.delete_entity(specialty, 'specialties')
-    if response.status_code == 200:
-        flash(f"Специальность \"{specialty['name']}\" удалена")
-    else:
-        flash(f"Ошибка удаления: код {response.status_code}")
+    specialty = services.get_specialty(CATALOG, id).items[0]
+    flash(services.delete_entity(
+        CATALOG,
+        specialty,
+        'specialties',
+        f'Удаленна специальность: {specialty.view_name}'
+    ))
     return redirect(url_for('main.specialties'))
 
 
 @main_bp.route('/groups/<int:id>/delete', methods=['POST'])
 @jwt_required
 def delete_group(id):
-    group = services.get_group(id)['item']
-    response = services.delete_entity(group, 'groups')
-    if response.status_code == 200:
-        flash(f"Группа \"{group['name']}\" удалена")
-    else:
-        flash(f"Ошибка удаления: код {response.status_code}")
+    group = services.get_group(CATALOG, id).items[0]
+    flash(services.delete_entity(
+        CATALOG,
+        group,
+        'groups',
+        f'Удалена группа: {group.name}'
+    ))
     return redirect(url_for('main.groups'))
 
 
 @main_bp.route('/students/<int:id>/delete', methods=['POST'])
 @jwt_required
 def delete_student(id):
-    student = services.get_student(id)['item']
-    response = services.delete_entity(student, 'students')
-    if response.status_code == 200:
-        flash(f"Студент \"{student['name']}\" удален(а)")
-    else:
-        flash(f"Ошибка удаления: код {response.status_code}")
+    student = services.get_student(CATALOG, id).items[0]
+    flash(services.delete_entity(
+        CATALOG,
+        student,
+        'students',
+        f'Удален студент: {student.name}'
+    ))
     return redirect(url_for('main.students'))
 
 
 @main_bp.route('/teachers/<int:id>/delete', methods=['POST'])
 @jwt_required
 def delete_teacher(id):
-    teacher = services.get_teacher(id)['item']
-    response = services.delete_entity(teacher, 'teachers')
-    if response.status_code == 200:
-        flash(f"Преподаватель \"{teacher['name']}\" удален(а)")
-    else:
-        flash(f"Ошибка удаления: код {response.status_code}")
+    teacher = services.get_teacher(CATALOG, id).items[0]
+    flash(services.delete_entity(
+        CATALOG,
+        teacher,
+        'teachers',
+        f'Удален преподаватель: {teacher.name}'
+    ))
     return redirect(url_for('main.teachers'))
 
 
 @main_bp.route('/disciplines/<int:id>/delete', methods=['POST'])
 @jwt_required
 def delete_discipline(id):
-    discipline = services.get_discipline(id)['item']
-    response = services.delete_entity(discipline, 'disciplines')
-    if response.status_code == 200:
-        flash(f"Дисциплина \"{discipline['name']}\" удалена")
-    else:
-        flash(f"Ошибка удаления: код {response.status_code}")
+    discipline = services.get_discipline(CATALOG, id).items[0]
+    flash(services.delete_entity(
+        CATALOG,
+        discipline,
+        'disciplines',
+        f'удалена дисциплина: {discipline.name}'
+    ))
     return redirect(url_for('main.disciplines'))
 
 
 @main_bp.route('/classes/<int:id>/delete', methods=['POST'])
 @jwt_required
 def delete_class(id):
-    cl = services.get_class(id)['item']
-    response = services.delete_entity(cl, 'classes')
-    if response.status_code == 200:
-        flash(f"Аудитория \"{cl['name']}\" удалена")
-    else:
-        flash(f"Ошибка удаления: код {response.status_code}")
+    classroom = services.get_class(CATALOG, id).items[0]
+    flash(services.delete_entity(
+        CATALOG,
+        classroom,
+        'classes',
+        f'Удалена аудитория: {classroom.name}'
+        ))
     return redirect(url_for('main.classes'))

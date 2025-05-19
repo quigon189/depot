@@ -1,7 +1,7 @@
 from typing import List, Type
-from pydantic import BaseModel
 import requests
-from app.main.models import BaseEntity, Specialty, Group, Student
+from app.main.forms import ClassForm, DisciplineForm, GroupForm, SpecialityForm, StudentForm, TeacherForm
+from app.main.models import BaseEntity, Specialty, Group, Student, Entity
 from app.main.models import Teacher, Discipline, Classroom
 
 
@@ -13,10 +13,10 @@ class Presenter:
 
     def __init__(self):
         self.type: type
-        self.items: List[BaseEntity] = []
+        self.items: List[Entity] = []
         self.errors: List[str] = []
 
-    def add_item(self, item: BaseEntity):
+    def add_item(self, item: Entity):
         self.items.append(item)
 
     def add_error(self, error: str):
@@ -128,12 +128,12 @@ class ClassesPresenter(Presenter):
     label: str = "Аудитории"
     entity: str = "classes"
     fields: List[PresenterField] = [
-            PresenterField('number', 'Номер', True),
-            PresenterField('name', 'Название'),
-            PresenterField('class_teacher_name', 'Заведующий'),
-            PresenterField('capacity', 'Вместительность'),
-            PresenterField('equipment', 'Оснащение'),
-            ]
+        PresenterField('number', 'Номер', True),
+        PresenterField('name', 'Название'),
+        PresenterField('class_teacher_name', 'Заведующий'),
+        PresenterField('capacity', 'Вместительность'),
+        PresenterField('equipment', 'Оснащение'),
+    ]
 
 
 def get_specialties(api_url: str) -> SpecialtiesPresenter:
@@ -196,128 +196,264 @@ def get_class(api_url: str, id: str):
     return ClassesPresenter().get_items(api)
 
 
-def send_specialty(form):
-    url = f"{CATALOG}/specialties"
-
-    specialty = {
-        'code': form.code.data,
-        'name': form.name.data,
-        'short_name': form.short_name.data
-    }
-
+def send_entity(url: str, data: List, text: str) -> str:
     headers = {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
     }
+    response = requests.post(url, json=data, headers=headers)
+    if response.status_code == 201:
+        return text
 
-    return requests.post(url, json=[specialty], headers=headers)
+    return "Ошибка при добавлении: код {} текст {}".format(
+        response.status_code,
+        response.json(),
+    )
 
 
-def send_group(form):
-    url = f"{CATALOG}/groups"
+def send_specialty(api_url: str, form: SpecialityForm) -> str:
+    return send_entity(
+        f"{api_url}/specialties",
+        [{
+            'code': form.code.data,
+            'name': form.name.data,
+            'short_name': form.short_name.data
+        }],
+        "Добавленна специальность:\n{} {}".format(
+            form.code.data,
+            form.name.data
+        )
+    )
 
-    group = {
-        'number': int(form.number.data),
-        'year_formed': int(form.year_formed.data),
-        'spec_id': int(form.spec_id.data),
-        'class_teacher_id': int(form.class_teacher_id.data)
+
+def send_group(api_url: str, form: GroupForm) -> str:
+    return send_entity(
+        f"{api_url}/groups",
+        [{
+            'number': int(form.number.data),
+            'year_formed': int(form.year_formed.data),
+            'spec_id': int(form.spec_id.data),
+            'class_teacher_id': int(form.class_teacher_id.data)
+        }],
+        f"Добавленна группа:\n{form.number.data}"
+    )
+
+
+def send_student(api_url: str, form: StudentForm) -> str:
+    return send_entity(
+        f"{api_url}/students",
+        [{
+            'last_name': form.last_name.data,
+            'first_name': form.first_name.data,
+            'middle_name': form.middle_name.data,
+            'birth_date': form.birth_date.data,
+            'phone': form.phone.data,
+            'group_id': int(form.group_id.data)
+        }],
+        "Добавленн(а) студент {} {}. {}.".format(
+            form.last_name.data,
+            form.first_name.data[0] if form.first_name.data else "",
+            form.middle_name.data[0] if form.middle_name.data else ""
+        )
+    )
+
+
+def send_teacher(api_url: str, form: TeacherForm) -> str:
+    return send_entity(
+        f"{api_url}/teachers",
+
+        [{
+            'last_name': form.last_name.data,
+            'first_name': form.first_name.data,
+            'middle_name': form.middle_name.data,
+            'birth_date': form.birth_date.data,
+            'phone': form.phone.data,
+        }],
+        "Добавленн преподаватель {} {}. {}.".format(
+            form.last_name.data,
+            form.first_name.data[0] if form.first_name.data else "",
+            form.middle_name.data[0] if form.middle_name.data else ""
+        )
+    )
+
+
+def send_discipline(api_url: str, form: DisciplineForm) -> str:
+    return send_entity(
+        f"{api_url}/disciplines",
+        [{
+            'code': form.code.data,
+            'name': form.name.data,
+            'semester': int(form.semester.data),
+            'hours': int(form.hours.data),
+            'group_id': int(form.group_id.data)
+        }],
+        "Добавленна дисциплина:\n{}.{}".format(
+            form.code.data,
+            form.name.data
+        )
+    )
+
+
+def send_class(api_url: str, form: ClassForm) -> str:
+    return send_entity(
+        f"{api_url}/classes",
+        [{
+            'number': int(form.number.data),
+            'name': form.name.data,
+            'type': form.type.data,
+            'capacity': int(form.capacity.data),
+            'equipment': form.equipment.data,
+            'teacher_id': int(form.teacher_id.data)
+        }],
+        "Добавленна аудитория:\n{} {}".format(
+            form.number.data,
+            form.name.data
+        )
+    )
+
+
+def update_entity(url: str, entity: BaseEntity, text: str) -> str:
+    headers = {
+        'Content-Type': 'application/json'
     }
+    response = requests.put(url, json=entity.model_dump(), headers=headers)
+    if response.status_code == 200:
+        return text
+    else:
+        return "Ошибка обновления: код {} ошибка {}".format(
+            response.status_code,
+            response.json()
+        )
+
+
+def update_specialty(api_url: str, id: int, form: SpecialityForm) -> str:
+    try:
+        specialty = Specialty(
+            id=id,
+            code=form.code.data,
+            name=form.name.data,
+            short_name=form.short_name.data
+        )
+    except ValueError as e:
+        return f"Ошибка валидации данных: {e}"
+
+    return update_entity(
+        f"{api_url}/specialties",
+        specialty,
+        f"Обнавлена специальность:\n{specialty.view_name}"
+    )
+
+
+def update_group(api_url: str, id: int, form: GroupForm) -> str:
+    try:
+        group = Group(
+            id=id,
+            number=form.number.data,
+            year_formed=form.year_formed.data,
+            spec_id=form.spec_id.data,
+            class_teacher_id=form.class_teacher_id.data
+        )
+    except ValueError as e:
+        return f"Ошибка валидации данных: {e}"
+
+    return update_entity(
+        f"{api_url}/groups",
+        group,
+        f"Обнавлена группа:\n{group.name}"
+    )
+
+
+def update_student(api_url: str, id: int, form: StudentForm) -> str:
+    try:
+        student = Student(
+            id=id,
+            first_name=form.first_name.data,
+            middle_name=form.middle_name.data,
+            last_name=form.last_name.data,
+            birth_date=form.birth_date.data,
+            phone=form.phone.data,
+            group_id=form.group_id.data
+        )
+    except ValueError as e:
+        return f"Ошибка валидации данных: {e}"
+
+    return update_entity(
+        f"{api_url}/students",
+        student,
+        f"Обнавлен студент:\n{student.name}"
+    )
+
+
+def update_teacher(api_url: str, id: int, form: TeacherForm) -> str:
+    try:
+        teacher = Teacher(
+            id=id,
+            first_name=form.first_name.data,
+            middle_name=form.middle_name.data,
+            last_name=form.last_name.data,
+            birth_date=form.birth_date.data,
+            phone=form.phone.data,
+        )
+    except ValueError as e:
+        return f"Ошибка валидации данных: {e}"
+
+    return update_entity(
+        f"{api_url}/teachers",
+        teacher,
+        f"Обнавлен преподаватель:\n{teacher.name}"
+    )
+
+
+def update_discipline(api_url: str, id: int, form: DisciplineForm) -> str:
+    try:
+        discipline = Discipline(
+            id=id,
+            code=form.code.data,
+            name=form.name.data,
+            semester=form.semester.data,
+            hours=form.hours.data,
+            group_id=form.group_id.data
+        )
+    except ValueError as e:
+        return f"Ошибка валидации данных: {e}"
+
+    return update_entity(
+        f"{api_url}/disciplines",
+        discipline,
+        f"Обнавлена дисциплина:\n{discipline.name}"
+    )
+
+
+def update_classroom(api_url: str, id: int, form: ClassForm) -> str:
+    try:
+        classroom = Classroom(
+            id=id,
+            number=form.number.data,
+            name=form.name.data,
+            type=form.type.data,
+            capacity=form.capacity.data,
+            equipment=form.equipment.data,
+            teacher_id=form.teacher_id.data
+        )
+    except ValueError as e:
+        return f"Ошибка валидации данных: {e}"
+
+    return update_entity(
+        f"{api_url}/classes",
+        classroom,
+        f"Обнавлена аудитория:\n{classroom.name}"
+    )
+
+
+def delete_entity(api_url: str, entity: BaseEntity, entity_type, text: str) -> str:
+    url = f"{api_url}/{entity_type}/{entity.id}"
 
     headers = {
         'Content-Type': 'application/json'
     }
 
-    return requests.post(url, json=[group], headers=headers)
+    response = requests.delete(url, headers=headers)
 
-
-def send_student(form):
-    url = f"{CATALOG}/students"
-
-    student = {
-        'last_name': form.last_name.data,
-        'first_name': form.first_name.data,
-        'middle_name': form.middle_name.data,
-        'birth_date': form.birth_date.data,
-        'phone': form.phone.data,
-        'group_id': int(form.group_id.data)
-    }
-
-    headers = {
-        'Content-Type': 'application/json'
-    }
-
-    return requests.post(url, json=[student], headers=headers)
-
-
-def send_teacher(form):
-    url = f"{CATALOG}/teachers"
-
-    teacher = {
-        'last_name': form.last_name.data,
-        'first_name': form.first_name.data,
-        'middle_name': form.middle_name.data,
-        'birth_date': form.birth_date.data,
-        'phone': form.phone.data,
-    }
-
-    headers = {
-        'Content-Type': 'application/json'
-    }
-
-    return requests.post(url, json=[teacher], headers=headers)
-
-
-def send_discipline(form):
-    url = f"{CATALOG}/disciplines"
-
-    disciplines = {
-        'code': form.code.data,
-        'name': form.name.data,
-        'semester': int(form.semester.data),
-        'hours': int(form.hours.data),
-        'group_id': int(form.group_id.data)
-    }
-
-    headers = {
-        'Content-Type': 'application/json'
-    }
-
-    return requests.post(url, json=[disciplines], headers=headers)
-
-
-def send_class(form):
-    url = f"{CATALOG}/classes"
-
-    cl = {
-        'number': int(form.number.data),
-        'name': form.name.data,
-        'type': form.type.data,
-        'capacity': int(form.capacity.data),
-        'equipment': form.equipment.data,
-        'teacher_id': int(form.teacher_id.data)
-    }
-
-    headers = {
-        'Content-Type': 'application/json'
-    }
-
-    return requests.post(url, json=[cl], headers=headers)
-
-
-def update_entity(entity, entity_type):
-    url = f"{CATALOG}/{entity_type}"
-
-    headers = {
-        'Content-Type': 'application/json'
-    }
-
-    return requests.put(url, json=entity, headers=headers)
-
-
-def delete_entity(entity, entity_type):
-    url = f"{CATALOG}/{entity_type}/{entity['id']}"
-
-    headers = {
-        'Content-Type': 'application/json'
-    }
-
-    return requests.delete(url, headers=headers)
+    if response.status_code == 200:
+        return text
+    else:
+        return f"Ошибка удаления: код {response.status_code}"

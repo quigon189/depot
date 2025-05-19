@@ -1,19 +1,18 @@
-from typing import List, Type
-import requests
-from app.main.forms import ClassForm, DisciplineForm, GroupForm, SpecialityForm, StudentForm, TeacherForm
+from typing import List, Tuple, Type, Any
+from app.main.forms import ClassForm, DisciplineForm, GroupForm, SpecialityForm
+from app.main.forms import StudentForm, TeacherForm
 from app.main.models import BaseEntity, Specialty, Group, Student, Entity
 from app.main.models import Teacher, Discipline, Classroom
 
-
-CATALOG = "http://go-catalog:8080/"
+import requests
 
 
 class Presenter:
     """Базовый класс представленний сущностей для отображения в шаблонах"""
 
     def __init__(self):
-        self.type: type
-        self.items: List[Entity] = []
+        self.type: Type[Entity]
+        self.items: List[Any] = []
         self.errors: List[str] = []
 
     def add_item(self, item: Entity):
@@ -196,21 +195,21 @@ def get_class(api_url: str, id: str):
     return ClassesPresenter().get_items(api)
 
 
-def send_entity(url: str, data: List, text: str) -> str:
+def send_entity(url: str, data: List, text: str):
     headers = {
         'Content-Type': 'application/json'
     }
     response = requests.post(url, json=data, headers=headers)
     if response.status_code == 201:
-        return text
+        return text, 'success'
 
     return "Ошибка при добавлении: код {} текст {}".format(
         response.status_code,
-        response.json(),
-    )
+        response.json()
+    ), 'danger'
 
 
-def send_specialty(api_url: str, form: SpecialityForm) -> str:
+def send_specialty(api_url: str, form: SpecialityForm):
     return send_entity(
         f"{api_url}/specialties",
         [{
@@ -218,27 +217,27 @@ def send_specialty(api_url: str, form: SpecialityForm) -> str:
             'name': form.name.data,
             'short_name': form.short_name.data
         }],
-        "Добавленна специальность:\n{} {}".format(
+        "Добавлена специальность: {} {}".format(
             form.code.data,
             form.name.data
         )
     )
 
 
-def send_group(api_url: str, form: GroupForm) -> str:
+def send_group(api_url: str, form: GroupForm) -> Tuple[str, str]:
     return send_entity(
         f"{api_url}/groups",
         [{
-            'number': int(form.number.data),
-            'year_formed': int(form.year_formed.data),
+            'number': form.number.data,
+            'year_formed': form.year_formed.data,
             'spec_id': int(form.spec_id.data),
             'class_teacher_id': int(form.class_teacher_id.data)
         }],
-        f"Добавленна группа:\n{form.number.data}"
+        f"Добавлена группа: {form.number.data}"
     )
 
 
-def send_student(api_url: str, form: StudentForm) -> str:
+def send_student(api_url: str, form: StudentForm) -> Tuple[str, str]:
     return send_entity(
         f"{api_url}/students",
         [{
@@ -249,7 +248,7 @@ def send_student(api_url: str, form: StudentForm) -> str:
             'phone': form.phone.data,
             'group_id': int(form.group_id.data)
         }],
-        "Добавленн(а) студент {} {}. {}.".format(
+        "Добавлен студент {} {}. {}.".format(
             form.last_name.data,
             form.first_name.data[0] if form.first_name.data else "",
             form.middle_name.data[0] if form.middle_name.data else ""
@@ -257,7 +256,7 @@ def send_student(api_url: str, form: StudentForm) -> str:
     )
 
 
-def send_teacher(api_url: str, form: TeacherForm) -> str:
+def send_teacher(api_url: str, form: TeacherForm) -> Tuple[str, str]:
     return send_entity(
         f"{api_url}/teachers",
 
@@ -268,7 +267,7 @@ def send_teacher(api_url: str, form: TeacherForm) -> str:
             'birth_date': form.birth_date.data,
             'phone': form.phone.data,
         }],
-        "Добавленн преподаватель {} {}. {}.".format(
+        "Добавлен преподаватель {} {}. {}.".format(
             form.last_name.data,
             form.first_name.data[0] if form.first_name.data else "",
             form.middle_name.data[0] if form.middle_name.data else ""
@@ -276,56 +275,56 @@ def send_teacher(api_url: str, form: TeacherForm) -> str:
     )
 
 
-def send_discipline(api_url: str, form: DisciplineForm) -> str:
+def send_discipline(api_url: str, form: DisciplineForm) -> Tuple[str,str]:
     return send_entity(
         f"{api_url}/disciplines",
         [{
             'code': form.code.data,
             'name': form.name.data,
-            'semester': int(form.semester.data),
-            'hours': int(form.hours.data),
+            'semester': form.semester.data,
+            'hours': form.hours.data,
             'group_id': int(form.group_id.data)
         }],
-        "Добавленна дисциплина:\n{}.{}".format(
+        "Добавлена дисциплина:\n{}.{}".format(
             form.code.data,
             form.name.data
         )
     )
 
 
-def send_class(api_url: str, form: ClassForm) -> str:
+def send_class(api_url: str, form: ClassForm) -> Tuple[str, str]:
     return send_entity(
         f"{api_url}/classes",
         [{
-            'number': int(form.number.data),
+            'number': form.number.data,
             'name': form.name.data,
             'type': form.type.data,
-            'capacity': int(form.capacity.data),
+            'capacity': form.capacity.data,
             'equipment': form.equipment.data,
             'teacher_id': int(form.teacher_id.data)
         }],
-        "Добавленна аудитория:\n{} {}".format(
+        "Добавлена аудитория:\n{} {}".format(
             form.number.data,
             form.name.data
         )
     )
 
 
-def update_entity(url: str, entity: BaseEntity, text: str) -> str:
+def update_entity(url: str, entity: BaseEntity, text: str) -> Tuple[str, str]:
     headers = {
         'Content-Type': 'application/json'
     }
     response = requests.put(url, json=entity.model_dump(), headers=headers)
     if response.status_code == 200:
-        return text
+        return text, 'success'
     else:
         return "Ошибка обновления: код {} ошибка {}".format(
             response.status_code,
             response.json()
-        )
+        ), 'danger'
 
 
-def update_specialty(api_url: str, id: int, form: SpecialityForm) -> str:
+def update_specialty(api_url: str, id: int, form: SpecialityForm) -> Tuple[str, str]:
     try:
         specialty = Specialty(
             id=id,
@@ -334,7 +333,7 @@ def update_specialty(api_url: str, id: int, form: SpecialityForm) -> str:
             short_name=form.short_name.data
         )
     except ValueError as e:
-        return f"Ошибка валидации данных: {e}"
+        return f"Ошибка валидации данных: {e}", 'danger'
 
     return update_entity(
         f"{api_url}/specialties",
@@ -343,7 +342,7 @@ def update_specialty(api_url: str, id: int, form: SpecialityForm) -> str:
     )
 
 
-def update_group(api_url: str, id: int, form: GroupForm) -> str:
+def update_group(api_url: str, id: int, form: GroupForm) -> Tuple[str, str]:
     try:
         group = Group(
             id=id,
@@ -353,7 +352,7 @@ def update_group(api_url: str, id: int, form: GroupForm) -> str:
             class_teacher_id=form.class_teacher_id.data
         )
     except ValueError as e:
-        return f"Ошибка валидации данных: {e}"
+        return f"Ошибка валидации данных: {e}", 'danger'
 
     return update_entity(
         f"{api_url}/groups",
@@ -362,7 +361,7 @@ def update_group(api_url: str, id: int, form: GroupForm) -> str:
     )
 
 
-def update_student(api_url: str, id: int, form: StudentForm) -> str:
+def update_student(api_url: str, id: int, form: StudentForm) -> Tuple[str, str]:
     try:
         student = Student(
             id=id,
@@ -374,7 +373,7 @@ def update_student(api_url: str, id: int, form: StudentForm) -> str:
             group_id=form.group_id.data
         )
     except ValueError as e:
-        return f"Ошибка валидации данных: {e}"
+        return f"Ошибка валидации данных: {e}", 'danger'
 
     return update_entity(
         f"{api_url}/students",
@@ -383,7 +382,7 @@ def update_student(api_url: str, id: int, form: StudentForm) -> str:
     )
 
 
-def update_teacher(api_url: str, id: int, form: TeacherForm) -> str:
+def update_teacher(api_url: str, id: int, form: TeacherForm) -> Tuple[str, str]:
     try:
         teacher = Teacher(
             id=id,
@@ -394,7 +393,7 @@ def update_teacher(api_url: str, id: int, form: TeacherForm) -> str:
             phone=form.phone.data,
         )
     except ValueError as e:
-        return f"Ошибка валидации данных: {e}"
+        return f"Ошибка валидации данных: {e}", 'danger'
 
     return update_entity(
         f"{api_url}/teachers",
@@ -403,7 +402,7 @@ def update_teacher(api_url: str, id: int, form: TeacherForm) -> str:
     )
 
 
-def update_discipline(api_url: str, id: int, form: DisciplineForm) -> str:
+def update_discipline(api_url: str, id: int, form: DisciplineForm) -> Tuple[str, str]:
     try:
         discipline = Discipline(
             id=id,
@@ -414,7 +413,7 @@ def update_discipline(api_url: str, id: int, form: DisciplineForm) -> str:
             group_id=form.group_id.data
         )
     except ValueError as e:
-        return f"Ошибка валидации данных: {e}"
+        return f"Ошибка валидации данных: {e}", 'danger'
 
     return update_entity(
         f"{api_url}/disciplines",
@@ -423,7 +422,7 @@ def update_discipline(api_url: str, id: int, form: DisciplineForm) -> str:
     )
 
 
-def update_classroom(api_url: str, id: int, form: ClassForm) -> str:
+def update_classroom(api_url: str, id: int, form: ClassForm) -> Tuple[str, str]:
     try:
         classroom = Classroom(
             id=id,
@@ -435,7 +434,7 @@ def update_classroom(api_url: str, id: int, form: ClassForm) -> str:
             teacher_id=form.teacher_id.data
         )
     except ValueError as e:
-        return f"Ошибка валидации данных: {e}"
+        return f"Ошибка валидации данных: {e}", 'danger'
 
     return update_entity(
         f"{api_url}/classes",
@@ -444,7 +443,7 @@ def update_classroom(api_url: str, id: int, form: ClassForm) -> str:
     )
 
 
-def delete_entity(api_url: str, entity: BaseEntity, entity_type, text: str) -> str:
+def delete_entity(api_url: str, entity: BaseEntity, entity_type, text: str) -> tuple:
     url = f"{api_url}/{entity_type}/{entity.id}"
 
     headers = {
@@ -454,6 +453,6 @@ def delete_entity(api_url: str, entity: BaseEntity, entity_type, text: str) -> s
     response = requests.delete(url, headers=headers)
 
     if response.status_code == 200:
-        return text
+        return text, 'success'
     else:
-        return f"Ошибка удаления: код {response.status_code}"
+        return f"Ошибка удаления: код {response.status_code}", 'danger'

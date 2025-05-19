@@ -118,7 +118,7 @@ class Group(BaseEntity):
 class Discipline(BaseEntity):
     code: str
     name: str
-    semester: int = Field(..., gt=0, le=10)
+    semester: int = Field(..., gt=0, le=100)
     hours: int = Field(..., gt=0)
 
     group_id: int

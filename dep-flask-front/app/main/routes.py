@@ -4,9 +4,9 @@ from app.require import jwt_required
 from app.main import services
 from app.main.forms import SpecialityForm, GroupForm, StudentForm, TeacherForm
 from app.main.forms import DisciplineForm, ClassForm
+from app import app
 
-
-CATALOG = "http://go-catalog:8080"
+CATALOG = f'http://{app.config["CATALOG"]}'
 
 
 @main_bp.route('/index')
@@ -27,7 +27,7 @@ def specialties():
     specialties = services.get_specialties(CATALOG)
 
     for err in specialties.errors:
-        flash(err)
+        flash(err, 'danger')
 
     return render_template('control/list.html', presenter=specialties)
 
@@ -38,7 +38,7 @@ def groups():
     groups = services.get_groups(CATALOG)
 
     for error in groups.errors:
-        flash(error)
+        flash(error, 'danger')
 
     return render_template('control/list.html', presenter=groups)
 
@@ -49,7 +49,7 @@ def students():
     students = services.get_students(CATALOG)
 
     for error in students.errors:
-        flash(error)
+        flash(error, 'danger')
 
     return render_template('control/list.html', presenter=students)
 
@@ -60,7 +60,7 @@ def teachers():
     teachers = services.get_teachers(CATALOG)
 
     for error in teachers.errors:
-        flash(error)
+        flash(error, 'danger')
 
     return render_template('control/list.html', presenter=teachers)
 
@@ -71,7 +71,7 @@ def disciplines():
     disciplines = services.get_disciplines(CATALOG)
 
     for error in disciplines.errors:
-        flash(error)
+        flash(error, 'danger')
 
     return render_template('control/list.html', presenter=disciplines)
 
@@ -82,7 +82,7 @@ def classes():
     classes = services.get_classes(CATALOG)
 
     for error in classes.errors:
-        flash(error)
+        flash(error, 'danger')
 
     return render_template('control/list.html', presenter=classes)
 
@@ -93,7 +93,7 @@ def specialty_info(id):
     specialty = services.get_specialty(CATALOG, id)
 
     for error in specialty.errors:
-        flash(error)
+        flash(error, 'danger')
 
     return render_template(
         'control/view.html',
@@ -108,7 +108,7 @@ def group_info(id):
     group = services.get_group(CATALOG, id)
 
     for error in group.errors:
-        flash(error)
+        flash(error, 'danger')
 
     return render_template(
         'control/view.html',
@@ -126,7 +126,7 @@ def student_info(id):
     student = services.get_student(CATALOG, id)
 
     for error in student.errors:
-        flash(error)
+        flash(error, 'danger')
 
     return render_template(
         'control/view.html',
@@ -139,6 +139,9 @@ def student_info(id):
 @jwt_required
 def teacher_info(id):
     teacher = services.get_teacher(CATALOG, id)
+
+    for error in teacher.errors:
+        flash(error, 'danger')
 
     return render_template(
         'control/view.html',
@@ -156,7 +159,7 @@ def discipline_info(id):
     discipline = services.get_discipline(CATALOG, id)
 
     for error in discipline.errors:
-        flash(error)
+        flash(error, 'danger')
 
     return render_template(
         'control/view.html',
@@ -171,7 +174,7 @@ def class_info(id):
     cl = services.get_class(CATALOG, id)
 
     for error in cl.errors:
-        flash(error)
+        flash(error, 'danger')
 
     return render_template(
         'control/view.html',
@@ -203,7 +206,8 @@ def create_group():
     form = GroupForm().with_choices(CATALOG)
 
     if form.validate_on_submit():
-        flash(services.send_group(CATALOG, form))
+        message = services.send_group(CATALOG, form)
+        flash(message)
         return redirect(url_for('main.groups'))
 
     return render_template(
@@ -220,7 +224,8 @@ def create_student():
     form = StudentForm().with_choices(CATALOG)
 
     if form.validate_on_submit():
-        flash(services.send_student(CATALOG, form))
+        message = services.send_student(CATALOG, form)
+        flash(message)
         return redirect(url_for('main.students'))
 
     return render_template(
@@ -237,7 +242,8 @@ def create_teacher():
     form = TeacherForm()
 
     if form.validate_on_submit():
-        flash(services.send_teacher(CATALOG, form))
+        message = services.send_teacher(CATALOG, form)
+        flash(message)
         return redirect(url_for('main.teachers'))
 
     return render_template(
@@ -254,7 +260,8 @@ def create_discipline():
     form = DisciplineForm().with_choices(CATALOG)
 
     if form.validate_on_submit():
-        flash(services.send_discipline(CATALOG, form))
+        message = services.send_discipline(CATALOG, form)
+        flash(message)
         return redirect(url_for('main.disciplines'))
 
     return render_template(
@@ -271,7 +278,8 @@ def create_class():
     form = ClassForm().with_choices(CATALOG)
 
     if form.validate_on_submit():
-        flash(services.send_class(CATALOG, form))
+        message = services.send_class(CATALOG, form)
+        flash(message)
         return redirect(url_for('main.classes'))
 
     return render_template(
@@ -288,7 +296,8 @@ def edit_specialty(id):
     form = SpecialityForm()
 
     if form.validate_on_submit():
-        flash(services.update_specialty(CATALOG, id, form))
+        message = services.update_specialty(CATALOG, id, form)
+        flash(message)
         return redirect(url_for('main.specialties'))
 
     specialty = services.get_specialty(CATALOG, id).items[0]
@@ -311,7 +320,8 @@ def edit_group(id):
     form = GroupForm().with_choices(CATALOG)
 
     if form.validate_on_submit():
-        flash(services.update_group(CATALOG, id, form))
+        message = services.update_group(CATALOG, id, form)
+        flash(message)
         return redirect(url_for('main.groups'))
 
     group = services.get_group(CATALOG, id).items[0]
@@ -335,7 +345,8 @@ def edit_student(id):
     form = StudentForm().with_choices(CATALOG)
 
     if form.validate_on_submit():
-        flash(services.update_student(CATALOG, id, form))
+        message = services.update_student(CATALOG, id, form)
+        flash(message)
         return redirect(url_for('main.students'))
 
     student = services.get_student(CATALOG, id).items[0]
@@ -361,7 +372,8 @@ def edit_teacher(id):
     form = TeacherForm()
 
     if form.validate_on_submit():
-        flash(services.update_teacher(CATALOG, id, form))
+        message = services.update_teacher(CATALOG, id, form)
+        flash(message)
         return redirect(url_for('main.teachers'))
 
     teacher = services.get_teacher(CATALOG, id).items[0]
@@ -385,7 +397,8 @@ def edit_teacher(id):
 def edit_discipline(id):
     form = DisciplineForm().with_choices(CATALOG)
     if form.validate_on_submit():
-        flash(services.update_discipline(CATALOG, id, form))
+        message = services.update_discipline(CATALOG, id, form)
+        flash(message)
         return redirect(url_for('main.disciplines'))
 
     discipline = services.get_discipline(CATALOG, id).items[0]
@@ -409,7 +422,8 @@ def edit_discipline(id):
 def edit_class(id):
     form = ClassForm().with_choices(CATALOG)
     if form.validate_on_submit():
-        flash(services.update_classroom(CATALOG, id, form))
+        message = services.update_classroom(CATALOG, id, form)
+        flash(message)
         return redirect(url_for('main.classes'))
 
     cl = services.get_class(CATALOG, id).items[0]
@@ -433,12 +447,13 @@ def edit_class(id):
 @jwt_required
 def delete_specialty(id):
     specialty = services.get_specialty(CATALOG, id).items[0]
-    flash(services.delete_entity(
+    message = services.delete_entity(
         CATALOG,
         specialty,
         'specialties',
         f'Удаленна специальность: {specialty.view_name}'
-    ))
+    )
+    flash(message)
     return redirect(url_for('main.specialties'))
 
 
@@ -446,12 +461,13 @@ def delete_specialty(id):
 @jwt_required
 def delete_group(id):
     group = services.get_group(CATALOG, id).items[0]
-    flash(services.delete_entity(
+    message = services.delete_entity(
         CATALOG,
         group,
         'groups',
         f'Удалена группа: {group.name}'
-    ))
+    )
+    flash(message)
     return redirect(url_for('main.groups'))
 
 
@@ -459,12 +475,13 @@ def delete_group(id):
 @jwt_required
 def delete_student(id):
     student = services.get_student(CATALOG, id).items[0]
-    flash(services.delete_entity(
+    message = services.delete_entity(
         CATALOG,
         student,
         'students',
         f'Удален студент: {student.name}'
-    ))
+    )
+    flash(message)
     return redirect(url_for('main.students'))
 
 
@@ -472,12 +489,13 @@ def delete_student(id):
 @jwt_required
 def delete_teacher(id):
     teacher = services.get_teacher(CATALOG, id).items[0]
-    flash(services.delete_entity(
+    message = services.delete_entity(
         CATALOG,
         teacher,
         'teachers',
         f'Удален преподаватель: {teacher.name}'
-    ))
+    )
+    flash(message)
     return redirect(url_for('main.teachers'))
 
 
@@ -485,12 +503,13 @@ def delete_teacher(id):
 @jwt_required
 def delete_discipline(id):
     discipline = services.get_discipline(CATALOG, id).items[0]
-    flash(services.delete_entity(
+    message = services.delete_entity(
         CATALOG,
         discipline,
         'disciplines',
         f'удалена дисциплина: {discipline.name}'
-    ))
+    )
+    flash(message)
     return redirect(url_for('main.disciplines'))
 
 
@@ -498,10 +517,11 @@ def delete_discipline(id):
 @jwt_required
 def delete_class(id):
     classroom = services.get_class(CATALOG, id).items[0]
-    flash(services.delete_entity(
+    message = services.delete_entity(
         CATALOG,
         classroom,
         'classes',
         f'Удалена аудитория: {classroom.name}'
-        ))
+    )
+    flash(message)
     return redirect(url_for('main.classes'))

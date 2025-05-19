@@ -1,8 +1,9 @@
 from flask import Flask
-from config import Config
+from config import Config, configure_logging
 
 app = Flask(__name__, static_url_path='/static')
 app.config.from_object(Config)
+configure_logging(app)
 
 from app import befor_request
 

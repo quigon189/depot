@@ -1,8 +1,18 @@
-from typing import Literal, List, Optional, Union
+from typing import Annotated, Literal, List, Optional, Union
 from pydantic import BaseModel, Field
 
 Entity = Union['Specialty', 'Group', 'Student',
                'Teacher', 'Discipline', 'Classroom', 'BaseEntity']
+
+BirthDate = Annotated[
+        str,
+        Field(..., pattern=r'^[0-9]{4}-(0[0-9]|1[0-2])-([0-2][0-9]|3[0-1])$')
+        ]
+
+Phone = Annotated[
+        str,
+        Field(..., pattern=r'^(\+\d\(\d{3}\)\d{3}-\d{2}-\d{2})?$')
+        ]
 
 
 class BaseEntity(BaseModel):
@@ -10,7 +20,7 @@ class BaseEntity(BaseModel):
 
 
 class Specialty(BaseEntity):
-    code: str = Field(..., min_length=8, max_length=8, examples=["09.02.06"])
+    code: str = Field(..., pattern=r'\d{2}\.\d{2}\.\d{2}')
     name: str = Field(..., max_length=200, examples=[
                       "Системное и сетевое администрирование"])
     short_name: str = Field(..., max_length=8, examples=["СА"])
@@ -32,8 +42,8 @@ class Teacher(BaseEntity):
     first_name: str = Field(..., examples=['Иван'])
     middle_name: str = Field(..., examples=['Иванович'])
     last_name: str = Field(..., examples=['Иванов'])
-    birth_date: str
-    phone: str
+    birth_date: BirthDate
+    phone: Optional[Phone]
 
     groups: Optional[List["Group"]] = None
     classes: Optional[List["Classroom"]] = None
@@ -51,8 +61,8 @@ class Student(BaseEntity):
     first_name: str = Field(..., examples=['Иван'])
     middle_name: str = Field(..., examples=['Иванович'])
     last_name: str = Field(..., examples=['Иванов'])
-    birth_date: str
-    phone: str
+    birth_date: BirthDate
+    phone: Optional[Phone]
 
     group_id: int
     group: Optional["Group"] = None
@@ -118,7 +128,7 @@ class Group(BaseEntity):
 class Discipline(BaseEntity):
     code: str
     name: str
-    semester: int = Field(..., gt=0, le=100)
+    semester: int = Field(..., gt=0, le=8)
     hours: int = Field(..., gt=0)
 
     group_id: int

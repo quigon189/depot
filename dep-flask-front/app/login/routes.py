@@ -41,6 +41,6 @@ def login():
             )
             return response
         else:
-            flash(f"Ошибка авторизации {resp.status_code}: {resp.json()}")
+            flash(f"Ошибка авторизации {resp.status_code}: {resp.json()}", 'warning')
 
     return render_template('login.html', form=form)

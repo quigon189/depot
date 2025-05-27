@@ -23,7 +23,7 @@ type Group struct {
 	Students    []Student    `gorm:"foreignKey:GroupID" json:"students,omitempty"`
 	Disciplines []Discipline `gorm:"foreignKey:GroupID" json:"disciplines,omitempty"`
 	Teacher     *Teacher     `gorm:"foreignKey:ClassTeacherID" json:"class_teacher,omitempty"`
-	Specialty   *Specialty    `gorm:"foreignKey:SpecID" json:"specialty,omitempty"`
+	Specialty   *Specialty   `gorm:"foreignKey:SpecID" json:"specialty,omitempty"`
 }
 
 func (Group) TableName() string {
@@ -56,6 +56,7 @@ type Teacher struct {
 
 	Groups      []Group      `gorm:"foreignKey:ClassTeacherID;" json:"groups,omitempty"`
 	Disciplines []Discipline `gorm:"many2many:teacher_disciplines;" json:"disciplines,omitempty"`
+	Classrooms  []Classroom  `gorm:"foreignKey:TeacherID;" json:"classes,omitempty"`
 }
 
 func (Teacher) TableName() string {
@@ -70,7 +71,7 @@ type Discipline struct {
 	Hours    uint   `gorm:"no null;" json:"hours"`
 	GroupID  uint   `json:"group_id"`
 
-	Group    *Group       `gorm:"foreignKey:GroupID;" json:"group,omitempty"`
+	Group    *Group      `gorm:"foreignKey:GroupID;" json:"group,omitempty"`
 	Classes  []Classroom `gorm:"many2many:discipline_classrooms;" json:"classess,omitempty"`
 	Teachers []Teacher   `gorm:"many2many:teacher_disciplines;" json:"teachers,omitempty"`
 }
@@ -88,7 +89,7 @@ type Classroom struct {
 	Capacity  uint   `json:"capacity"`
 	TeacherID uint   `json:"teacher_id"`
 
-	Teacher     *Teacher      `gorm:"foreignKey:TeacherID" json:"teacher,omitempty"`
+	Teacher     *Teacher     `gorm:"foreignKey:TeacherID" json:"teacher,omitempty"`
 	Disciplines []Discipline `gorm:"many2many:discipline_classrooms;" json:"disciplines,omitempty"`
 }
 

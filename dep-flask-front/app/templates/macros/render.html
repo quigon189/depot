@@ -71,3 +71,31 @@
 	</div>
 </form>
 {% endmacro %}
+
+{% macro form_import(form) %}
+<form method="POST" enctype="multipart/form-data">
+	{{ form.hidden_tag() }}
+	<div class="mb-3">
+		{{ form.entity.label(class="form-label") }}
+		{{ form.entity() }}
+	</div>
+
+	<div class="mb-3">
+		{{ form.file.label(class="form-label") }}
+		{{ form.file() }}
+	</div>
+
+	{% if form.errors.file %}
+	<div class="mb-3 alert alert-danger" role="alert">
+		{% for error in form.errors.file %}
+		{{ error }}	
+		{% endfor %}
+	</div>
+	{% endif %}
+
+	<div class="mb-4 justify-content-center">
+		<button type="submit" class="btn btn-primary">Отправить</button>
+		<a href="/" class="btn btn-secondary">Отменить</a>
+	</div>
+</form>
+{% endmacro %}

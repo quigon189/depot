@@ -1,0 +1,10 @@
+{% import 'macros/render.html' as render %}
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+	<div class="col-6">
+		<h2>Импорт</h2>
+		{{ render.form_import(form)}}
+	</div>
+</div>
+{% endblock %}

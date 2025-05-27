@@ -1,4 +1,5 @@
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileRequired, FileAllowed
 from wtforms import StringField, IntegerField, SelectField, TextAreaField
 from wtforms.validators import DataRequired
 
@@ -207,7 +208,7 @@ class DisciplineForm(FlaskForm):
             'pattern': r'[1-8]',
             'title': 'Цифра от 1 до 8',
             'required': True
-            }
+        }
     )
     hours = IntegerField(
         "Нагрузка (ч.)",
@@ -261,3 +262,28 @@ class ClassForm(FlaskForm):
         teachers = services.get_teachers(api).items
         self.teacher_id.choices = [(t.id, t.name) for t in teachers]
         return self
+
+
+class ImportForm(FlaskForm):
+    entity = SelectField(
+        "Выберете модель для экспорта",
+        validators=[DataRequired()],
+        choices=[
+            ('specialties', 'Специальности'),
+            ('groups', 'Группы'),
+            ('students', 'Студенты'),
+            ('teachers', 'Преподаватели'),
+            ('disciplines', 'Дисциплины'),
+            ('classes', 'Аудитории'),
+        ],
+        render_kw={'class': 'form-select', 'required': True}
+    )
+
+    file = FileField(
+        "Выберите csv файл",
+        validators=[
+            FileRequired(),
+            FileAllowed('csv', 'Поддерживается только формат csv')
+        ],
+        render_kw={'class': 'form-control', 'required': True}
+    )

@@ -10,3 +10,4 @@ from app.main.routes import students
 from app.main.routes import teachers
 from app.main.routes import disciplines
 from app.main.routes import classrooms
+from app.main.routes import import_data

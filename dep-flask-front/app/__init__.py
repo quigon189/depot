@@ -1,8 +1,9 @@
 from flask import Flask
-from config import Config, configure_logging
+from config import Config, configure_logging #, make_upload_folder
 
 app = Flask(__name__, static_url_path='/static')
 app.config.from_object(Config)
+#make_upload_folder(app)
 configure_logging(app)
 
 from app import befor_request

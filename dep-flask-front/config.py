@@ -7,8 +7,14 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'ghjgecr123'
     AUTH = os.environ.get('AUTH') or 'localhost:18080'
     CATALOG = os.environ.get('CATALOG') or 'localhost:18081'
+    UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER') or 'uploads'
 
     LOG_LEVEL = logging.INFO
+
+
+def make_upload_folder(app: Flask):
+    path = app.config['UPLOAD_FOLDER']
+    os.makedirs(path, exist_ok=True)
 
 
 def configure_logging(app: Flask):

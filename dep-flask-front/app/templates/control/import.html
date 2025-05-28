@@ -1,10 +1,95 @@
-{% import 'macros/render.html' as render %}
 {% extends 'base.html' %}
 {% block content %}
 <div class="row justify-content-center">
+	<!-- Форма импорта -->
 	<div class="col-6">
 		<h2>Импорт</h2>
-		{{ render.form_import(form)}}
+			<form method="POST" enctype="multipart/form-data">
+				{{ form.hidden_tag() }}
+				<div class="mb-3">
+					{{ form.entity.label(class="form-label") }}
+					{{ form.entity() }}
+				</div>
+
+				<div class="mb-3">
+					{{ form.file.label(class="form-label") }}
+					{{ form.file() }}
+					<div class="form-text">
+						Формат файла: Excel (.xlsx)
+						<a href="#" data-bs-toggle="modal" data-bs-target="#formatHelper">
+							Скачать шаблон
+						</a>
+				</div>
+
+				{% if form.errors.file %}
+				<div class="mb-3 alert alert-danger" role="alert">
+					{% for error in form.errors.file %}
+					{{ error }}	
+					{% endfor %}
+				</div>
+				{% endif %}
+
+				<div class="mb-4 justify-content-center">
+					<button type="submit" class="btn btn-primary">Отправить</button>
+					<a href="/" class="btn btn-secondary">Отменить</a>
+				</div>
+			</form>
+	</div>
+
+	<!-- Инструкция -->
+	<div class="col-md-6">
+		<div class="card shadow">
+			<div class="card-header bg-info text-white">
+				<h4 class="mb-0">Инструкция по импорту</h4>
+			</div>
+			<div class="card-body">
+				<h5>Как использовать:</h5>
+				<ol>
+					<li>Выберете модель для импорта</li>
+					<li>Скачайте соответствующий шаблон</li>
+					<li>Заполните данные, используя выпадающие списки</li>
+					<li>Загрузите заполненый файл</li>
+				</ol>
+
+				<div class="alert alert-warning mt-3">
+					<strong>Важно!</strong> Не изменяйте структуру шаблона и названия листов.
+				</div>
+			</div>
+		</div>
 	</div>
 </div>
+
+<!-- Модальное окно с шаблонами -->
+<div class="modal fade" id="formatHelper">
+	<div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<div class="modal-header bg-primary text-white">
+				<h5 class="modal-title">Скачать шаблоны</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+			</div>
+			
+			<div class="modal-body">
+				<div class="row">
+					<div class="col-md-4 mb-3">
+						<div class="card h-100">
+							<div class="card-body text-center">
+								<h5>Специальности</h5>
+								<p>Код, Название, Короткое обозначение</p>
+								<a href="{{ url_for('main.download_template', entity='specialties')}}"
+									class="btn btn-success">
+									<i class="bi bi-download"></i>Скачать
+								</a>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="alert alert-info mt-3">
+            	<i class="bi bi-info-circle"></i> Шаблоны содержат выпадающие списки для выбора связанных сущностей
+            </div>
+		</div>
+	</div>
+</div>
+
 {% endblock %}

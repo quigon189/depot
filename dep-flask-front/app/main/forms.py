@@ -280,10 +280,10 @@ class ImportForm(FlaskForm):
     )
 
     file = FileField(
-        "Выберите csv файл",
+        "Выберите excel файл",
         validators=[
             FileRequired(),
-            FileAllowed('csv', 'Поддерживается только формат csv')
+            FileAllowed('xslx', 'Поддерживается только формат xlsx')
         ],
         render_kw={'class': 'form-control', 'required': True}
     )

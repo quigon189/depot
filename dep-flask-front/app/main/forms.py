@@ -266,7 +266,7 @@ class ClassForm(FlaskForm):
 
 class ImportForm(FlaskForm):
     entity = SelectField(
-        "Выберете модель для экспорта",
+        "Выберете модель для импорта",
         validators=[DataRequired()],
         choices=[
             ('specialties', 'Специальности'),

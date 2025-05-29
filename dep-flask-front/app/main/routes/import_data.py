@@ -11,11 +11,11 @@ CATALOG = f'http://{app.config["CATALOG"]}'
 @main_bp.route('/download_template/<entity>')
 @jwt_required
 def download_template(entity: str):
-    if entity not in ['specialties']:
+    if entity not in ['specialties', 'groups']:
         flash('Недопустимая сущность', 'danger')
         return redirect(request.referrer or url_for('main.index'))
 
-    buffer = generate_template(entity)
+    buffer = generate_template(entity, CATALOG)
     filename = f"{entity}_template.xlsx"
 
     return send_file(

@@ -1,6 +1,7 @@
+import os
 from flask import flash, redirect, render_template, request, send_file, url_for
 from app.main import main_bp
-from app.main.import_data import generate_template
+from app.main.import_data import generate_template, import_excel
 from app.require import jwt_required
 from app.main.forms import ImportForm
 from app import app
@@ -11,7 +12,7 @@ CATALOG = f'http://{app.config["CATALOG"]}'
 @main_bp.route('/download_template/<entity>')
 @jwt_required
 def download_template(entity: str):
-    if entity not in ['specialties', 'groups']:
+    if entity not in ['specialties', 'groups', 'students', 'teachers', 'disciplines', 'classes']:
         flash('Недопустимая сущность', 'danger')
         return redirect(request.referrer or url_for('main.index'))
 
@@ -26,13 +27,31 @@ def download_template(entity: str):
     )
 
 
-@main_bp.route('/export', methods=['POST', 'GET'])
+@main_bp.route('/import', methods=['POST', 'GET'])
 @jwt_required
 def import_data():
     form = ImportForm()
 
     if form.validate_on_submit():
-        flash("Данный принятны")
+        entity = form.entity.data
+        file = form.file.data
+        try:
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+            counter = 1
+            while os.path.exists(file_path):
+                file_path = f"{file_path}({counter})"
+                counter += 1
+
+            file.save(file_path)
+
+            with open(file_path, 'rb') as f:
+                message, category = import_excel(CATALOG, entity, f)
+                flash(message, category)
+
+            os.remove(file_path)
+
+        except Exception as e:
+            flash(f"Ошибка при импорте данных: {str(e)}", "danger")
 
     return render_template(
         'control/import.html',

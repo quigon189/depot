@@ -283,7 +283,7 @@ class ImportForm(FlaskForm):
         "Выберите excel файл",
         validators=[
             FileRequired(),
-            FileAllowed('xslx', 'Поддерживается только формат xlsx')
+            FileAllowed(['xlsx'], 'Поддерживается только формат xlsx')
         ],
         render_kw={'class': 'form-control', 'required': True}
     )

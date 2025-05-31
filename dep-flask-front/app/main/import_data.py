@@ -212,6 +212,8 @@ def import_excel(api: str, entity: str, file_stream):
 
             data_to_send.append(data)
 
+    print(data_to_send)
+
     return send_entity(
         f'{api}/{entity}',
         data_to_send,

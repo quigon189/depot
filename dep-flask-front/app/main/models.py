@@ -40,11 +40,11 @@ class Specialty(BaseEntity):
 
 
 class Teacher(BaseEntity):
-    first_name: str = Field(..., examples=['Иван'])
-    middle_name: str = Field(..., examples=['Иванович'])
-    last_name: str = Field(..., examples=['Иванов'])
-    birth_date: BirthDate
-    phone: Optional[Phone]
+    first_name: str = Field(..., title='Имя', examples=['Иван'])
+    middle_name: str = Field(..., title='Отчество', examples=['Иванович'])
+    last_name: str = Field(..., title='Фамилия', examples=['Иванов'])
+    birth_date: BirthDate = Field(..., title='День рождения')
+    phone: Optional[Phone] = Field(..., title='Номер телефона')
 
     groups: Optional[List["Group"]] = None
     classes: Optional[List["Classroom"]] = None
@@ -59,14 +59,14 @@ class Teacher(BaseEntity):
 
 
 class Student(BaseEntity):
-    first_name: str = Field(..., examples=['Иван'])
-    middle_name: str = Field(..., examples=['Иванович'])
-    last_name: str = Field(..., examples=['Иванов'])
-    birth_date: BirthDate
-    phone: Optional[Phone]
+    first_name: str = Field(..., title='Имя', examples=['Иван'])
+    middle_name: str = Field(..., title='Отчество', examples=['Иванович'])
+    last_name: str = Field(..., title='Фамилия', examples=['Иванов'])
+    birth_date: BirthDate = Field(..., title='День рождения')
+    phone: Optional[Phone] = Field(..., title='Номер телефона')
 
     group_id: int
-    group: Optional["Group"] = None
+    group: Optional["Group"] = Field(None, title='Группа')
 
     @property
     def name(self) -> str:
@@ -84,14 +84,14 @@ class Student(BaseEntity):
 
 
 class Group(BaseEntity):
-    number: int = Field(..., gt=0)
-    year_formed: int
+    number: int = Field(..., gt=0, title='Номер')
+    year_formed: int = Field(..., title='Год набора')
 
     spec_id: int
-    specialty: Optional[Specialty] = None
+    specialty: Optional[Specialty] = Field(None, title='Специальность')
 
     class_teacher_id: int
-    class_teacher: Optional[Teacher] = None
+    class_teacher: Optional[Teacher] = Field(None, title='Классный руководитель')
 
     students: Optional[List[Student]] = None
     disciplines: Optional[List["Discipline"]] = None
@@ -127,13 +127,13 @@ class Group(BaseEntity):
 
 
 class Discipline(BaseEntity):
-    code: str
-    name: str
-    semester: int = Field(..., gt=0, le=8)
-    hours: int = Field(..., gt=0)
+    code: str = Field(..., title='Код')
+    name: str = Field(..., title='Название')
+    semester: int = Field(..., gt=0, le=8, title='Семестр')
+    hours: int = Field(..., gt=0, title='Максимальная нагрузка')
 
     group_id: int
-    group: Optional[Group] = None
+    group: Optional[Group] = Field(None, title='Группа')
 
     @property
     def view_name(self) -> str:
@@ -147,14 +147,14 @@ class Discipline(BaseEntity):
 
 
 class Classroom(BaseEntity):
-    number: int = Field(..., gt=0)
-    name: str = Field(..., examples=['Операционные системы'])
-    type: Literal['Кабинет', 'Лаборатория', 'Полигон']
-    capacity: int
-    equipment: str
+    number: int = Field(..., gt=0, title='Номер')
+    name: str = Field(..., title='Название', examples=['Операционные системы'])
+    type: Literal['Кабинет', 'Лаборатория', 'Полигон'] = Field(..., title='Тип')
+    capacity: int = Field(..., title='Вместительность')
+    equipment: str = Field(..., title='Оснащение')
 
     teacher_id: int
-    teacher: Optional[Teacher] = None
+    teacher: Optional[Teacher] = Field(None, title='Преподаватель')
 
     @property
     def class_teacher_name(self) -> str:

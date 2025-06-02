@@ -1,7 +1,8 @@
 import os
 from flask import flash, redirect, render_template, request, send_file, url_for
 from app.main import main_bp
-from app.main.import_data import generate_template, import_excel
+from app.main.import_data import import_excel
+from app.main.service.import_classes import generate_template
 from app.require import jwt_required
 from app.main.forms import ImportForm
 from app import app
@@ -17,6 +18,10 @@ def download_template(entity: str):
         return redirect(request.referrer or url_for('main.index'))
 
     buffer = generate_template(entity, CATALOG)
+    if not buffer:
+        flash('Ошибка генерации шаблона', 'danger')
+        return redirect(request.referrer or url_for('main.index'))
+
     filename = f"{entity}_template.xlsx"
 
     return send_file(

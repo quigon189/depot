@@ -1,6 +1,5 @@
 from flask import flash, redirect, render_template, url_for
 from app.main import main_bp
-from app.main.import_classes import ExcelImporter
 from app.main.models import Specialty
 from app.require import jwt_required
 from app.main import services
@@ -25,9 +24,6 @@ def specialties():
 @jwt_required
 def specialty_info(id):
     specialty = services.get_specialty(CATALOG, id)
-
-    tmp = ExcelImporter(model=Specialty)
-    flash(tmp.schema, 'message')
 
     for error in specialty.errors:
         flash(error, 'danger')

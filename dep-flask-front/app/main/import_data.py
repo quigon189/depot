@@ -1,9 +1,11 @@
-from typing import Dict, List
+from typing import List
 from openpyxl import Workbook, load_workbook
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import BaseModel
-from app.main.services import GroupsPresenter, SpecialtiesPresenter, TeachersPresenter, get_groups, get_specialties, get_teachers, send_entity, send_specialty
+from app.main.import_classes import ExcelImporter
+from app.main.models import Group, Specialty
+from app.main.services import GroupsPresenter, SpecialtiesPresenter, TeachersPresenter, get_groups, get_specialties, get_teachers, send_entity
 import io
 
 
@@ -129,13 +131,24 @@ def generate_template(entity: str, api: str) -> io.BytesIO:
     wb = Workbook()
 
     if entity == 'specialties':
-        specialty_template(wb)
+        return ExcelImporter(
+            model=Specialty,
+            template_properties=['code', 'name', 'short_name']
+        ).generate_template()
+
     elif entity == 'groups':
-        group_template(
-            wb,
-            get_specialties(api),
-            get_teachers(api)
-        )
+
+        return ExcelImporter(
+            model=Group,
+            template_properties=['number', 'year_formed',
+                                 'specialty', 'class_teacher'],
+            dependensies={
+                'specialty': [s.code for s in get_specialties(api).items],
+                'class_teacher': [t.name for t in get_teachers(api).items]
+            }
+
+        ).generate_template()
+
     elif entity == 'students':
         student_template(
             wb,

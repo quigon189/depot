@@ -5,25 +5,26 @@ Entity = Union['Specialty', 'Group', 'Student',
                'Teacher', 'Discipline', 'Classroom', 'BaseEntity']
 
 BirthDate = Annotated[
-        str,
-        Field(..., pattern=r'^[0-9]{4}-(0[0-9]|1[0-2])-([0-2][0-9]|3[0-1])$')
-        ]
+    str,
+    Field(..., pattern=r'^[0-9]{4}-(0[0-9]|1[0-2])-([0-2][0-9]|3[0-1])$')
+]
 
 Phone = Annotated[
-        str,
-        Field(..., pattern=r'^(\+\d\(\d{3}\)\d{3}-\d{2}-\d{2})?$')
-        ]
+    str,
+    Field(..., pattern=r'^(\+\d\(\d{3}\)\d{3}-\d{2}-\d{2})?$')
+]
 
 
 class BaseEntity(BaseModel):
-    id: int
+    id: int = Field(..., title='ID')
 
 
 class Specialty(BaseEntity):
-    code: str = Field(..., pattern=r'\d{2}\.\d{2}\.\d{2}')
-    name: str = Field(..., max_length=200, examples=[
+    code: str = Field(..., pattern=r'\d{2}\.\d{2}\.\d{2}', title='Код')
+    name: str = Field(..., max_length=200, title='Название', examples=[
                       "Системное и сетевое администрирование"])
-    short_name: str = Field(..., max_length=8, examples=["СА"])
+    short_name: str = Field(..., max_length=8,
+                            title='Короткое обозначение', examples=["СА"])
 
     groups: Optional[List["Group"]] = None
 

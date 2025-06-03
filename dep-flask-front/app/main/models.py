@@ -16,7 +16,7 @@ Phone = Annotated[
 
 
 class BaseEntity(BaseModel):
-    id: int = Field(..., title='ID')
+    id: Optional[int] = Field(None, title='ID')
 
 
 class Specialty(BaseEntity):
@@ -38,6 +38,13 @@ class Specialty(BaseEntity):
             return len(self.groups)
         return 0
 
+    def to_dict(self):
+        return {
+            'code': self.code,
+            'name': self.name,
+            'short_name': self.short_name
+        }
+
 
 class Teacher(BaseEntity):
     first_name: str = Field(..., title='Имя', examples=['Иван'])
@@ -56,6 +63,15 @@ class Teacher(BaseEntity):
             self.first_name,
             self.middle_name
         )
+
+    def to_dict(self):
+        return {
+            'first_name': self.first_name,
+            'middle_name': self.middle_name,
+            'last_name': self.last_name,
+            'birth_date': self.birth_date,
+            'phone': self.phone
+        }
 
 
 class Student(BaseEntity):
@@ -91,7 +107,8 @@ class Group(BaseEntity):
     specialty: Optional[Specialty] = Field(None, title='Специальность')
 
     class_teacher_id: int
-    class_teacher: Optional[Teacher] = Field(None, title='Классный руководитель')
+    class_teacher: Optional[Teacher] = Field(
+        None, title='Классный руководитель')
 
     students: Optional[List[Student]] = None
     disciplines: Optional[List["Discipline"]] = None
@@ -149,7 +166,8 @@ class Discipline(BaseEntity):
 class Classroom(BaseEntity):
     number: int = Field(..., gt=0, title='Номер')
     name: str = Field(..., title='Название', examples=['Операционные системы'])
-    type: Literal['Кабинет', 'Лаборатория', 'Полигон'] = Field(..., title='Тип')
+    type: Literal['Кабинет', 'Лаборатория',
+                  'Полигон'] = Field(..., title='Тип')
     capacity: int = Field(..., title='Вместительность')
     equipment: str = Field(..., title='Оснащение')
 

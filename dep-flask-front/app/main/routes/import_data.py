@@ -1,8 +1,7 @@
 import os
 from flask import flash, redirect, render_template, request, send_file, url_for
 from app.main import main_bp
-from app.main.import_data import import_excel
-from app.main.service.import_classes import generate_template
+from app.main.service.import_classes import generate_template, import_from_template
 from app.require import jwt_required
 from app.main.forms import ImportForm
 from app import app
@@ -50,7 +49,7 @@ def import_data():
             file.save(file_path)
 
             with open(file_path, 'rb') as f:
-                message, category = import_excel(CATALOG, entity, f)
+                message, category = import_from_template(CATALOG, entity, f)
                 flash(message, category)
 
             os.remove(file_path)

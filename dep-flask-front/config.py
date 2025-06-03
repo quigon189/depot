@@ -9,7 +9,7 @@ class Config:
     CATALOG = os.environ.get('CATALOG') or 'localhost:18081'
     UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER') or 'uploads'
 
-    LOG_LEVEL = logging.INFO
+    LOG_LEVEL = logging.DEBUG
 
 
 def make_upload_folder(app: Flask):

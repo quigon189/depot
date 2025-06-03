@@ -38,11 +38,12 @@ class ExcelImporter:
         fields = self._get_fields()
 
         headers = []
-        for field_info in fields:
-            if field_info['name'] in self.template_properties:
-                headers.append(field_info['header'])
-
-        ws.append(headers)
+        for col_num, field_info in enumerate(fields, start=1):
+            ws.cell(row=1, column=col_num, value=field_info['header'])
+            headers.append(field_info['header'])
+            if not field_info['name'] in self.template_properties:
+                col_letter = ws.cell(row=1, column=col_num).column_letter
+                ws.column_dimensions[col_letter].hidden = True
 
         if self.dependensies:
             list_sheet = wb.create_sheet('Списки')
@@ -141,7 +142,7 @@ class ExcelImporter:
         for field_name, field_info in self.schema['properties'].items():
             fields.append({
                 'name': field_name,
-                'header': field_info.get('title', field_name.replace('_', ' ').upper()),
+                'header': field_info.get('title', field_name),
                 'type': field_info.get('type', 'string'),
                 'required': field_name in self.schema.get('required', [])
             })

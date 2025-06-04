@@ -21,7 +21,7 @@ class ExcelImporter:
     Так же нужен для создания шаблонов Excel файлов
     """
 
-    def __init__(self, model: Type[T], template_properties: List[str], dependensies: Optional[Dict[str, List]] = None):
+    def __init__(self, model: Type[T], template_properties: List[str], dependensies: Optional[List[Dict]] = None):
         self.model = model
         self.dependensies = dependensies or {}
         self.template_properties = template_properties
@@ -38,48 +38,58 @@ class ExcelImporter:
         fields = self._get_fields()
 
         headers = []
-        for col_num, field_info in enumerate(fields, start=1):
-            ws.cell(row=1, column=col_num, value=field_info['header'])
-            headers.append(field_info['header'])
-            if not field_info['name'] in self.template_properties:
-                col_letter = ws.cell(row=1, column=col_num).column_letter
-                ws.column_dimensions[col_letter].hidden = True
-
-        for col_num, field_info in enumerate(fields, strat=1):
+        for field_info in fields:
+            hidden = not field_info['name'] in self.template_properties
             headers.append({
                 'header': field_info['header'],
-                'hidden': not field_info['name'] in self.template_properties
+                'hidden': hidden
                 })
 
-        for header in headers:
-
+        headers = sorted(headers, key=lambda x: not x['hidden'])
+        for col_num, header in enumerate(headers, start=1):
+            ws.cell(row=1, column=col_num, value=header['header'])
+            if header['hidden']:
+                col_letter = ws.cell(row=1, column=col_num).column_letter
+                ws.column_dimensions[col_letter].hidden = True
 
         if self.dependensies:
             list_sheet = wb.create_sheet('Списки')
             i = 1
-            for d_name, dependence in self.dependensies.items():
-                letter = get_column_letter(i)
-                list_sheet[f'{letter}1'] = d_name
-                for idx, value in enumerate(dependence, start=2):
-                    list_sheet[f'{letter}{idx}'] = value
+            for dependence in self.dependensies:
+                letter_value = get_column_letter(i)
+                letter_id = get_column_letter(i+1)
+                v_header, id_header = dependence['headers']
+                list_sheet[f'{letter_value}1'] = v_header
+                list_sheet[f'{letter_id}1'] = id_header
+                for idx, (value, id) in enumerate(dependence['values'], start=2):
+                    list_sheet[f'{letter_value}{idx}'] = value
+                    list_sheet[f'{letter_id}{idx}'] = id
 
-                if d_name in self.template_properties:
+                if v_header in self.template_properties:
 
                     dv = DataValidation(
                         type='list',
-                        formula1=f'=Списки!${letter}$2:${letter}${len(dependence)+1}',
-                        allow_blank=True
+                        formula1=f'=Списки!${letter_value}$2:${letter_value}${len(dependence["values"])+1}',
+                        showErrorMessage=True
                     )
-                    letter_dep = 'A'
-                    for idx, header in enumerate(headers):
+                    for idx, header in enumerate(headers, start=1):
                         for field_info in fields:
-                            if field_info['name'] == d_name and field_info['header'] == header:
-                                letter_dep = get_column_letter(idx + 1)
+                            if field_info['name'] == v_header and field_info['header'] == header['header']:
+                                letter_dep = get_column_letter(idx)
 
-                    dv.add(f'{letter_dep}2:{letter_dep}1048576')
-                    ws.add_data_validation(dv)
+                                dv.add(f'{letter_dep}2:{letter_dep}1048576')
+                                ws.add_data_validation(dv)
 
-                i += 1
+                                for idx2, header2 in enumerate(headers, start=1):
+                                    for field_info2 in fields:
+                                        if field_info2['name'] == id_header and field_info2['header'] == header2['header']:
+                                            for row in range(2, 10000):
+                                                ws.cell(
+                                                        row=row,
+                                                        column=idx2,
+                                                        value=f'=ЕСЛИОШИБКА(ВПР({letter_dep}{row};Списки!{letter_value}2:{letter_id}{len(dependence["values"])};2;ЛОЖЬ);"0")'
+                                                        )
+                i += 2
 
         for col in ws.columns:
             column = col[0].column_letter
@@ -212,12 +222,16 @@ class GroupImporter(ExcelImporter):
             model=Group,
             template_properties=['number', 'year_formed',
                                  'specialty', 'class_teacher'],
-            dependensies={
-                'specialty': [s.code for s in specialties],
-                'spec_id': [s.id for s in specialties],
-                'class_teacher': [t.name for t in teachers],
-                'class_teacher_id': [t.id for t in teachers]
-            }
+            dependensies=[
+                {
+                    'headers': ('specialty', 'spec_id'),
+                    'values': [(s.code, s.id) for s in specialties]
+                    },
+                {
+                    'headers': ('class_teacher', 'class_teacher_id'),
+                    'values': [(t.name, t.id) for t in teachers]
+                    }
+                ]
         )
 
 

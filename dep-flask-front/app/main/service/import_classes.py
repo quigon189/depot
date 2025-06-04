@@ -45,6 +45,15 @@ class ExcelImporter:
                 col_letter = ws.cell(row=1, column=col_num).column_letter
                 ws.column_dimensions[col_letter].hidden = True
 
+        for col_num, field_info in enumerate(fields, strat=1):
+            headers.append({
+                'header': field_info['header'],
+                'hidden': not field_info['name'] in self.template_properties
+                })
+
+        for header in headers:
+
+
         if self.dependensies:
             list_sheet = wb.create_sheet('Списки')
             i = 1

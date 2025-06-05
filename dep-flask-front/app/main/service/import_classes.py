@@ -2,7 +2,7 @@ import io
 import json
 from typing import Dict, List, Optional, Tuple, Type, TypeVar
 
-from openpyxl import Workbook, load_workbook
+from openpyxl import Workbook, cell, load_workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.worksheet.worksheet import Worksheet
@@ -15,9 +15,40 @@ from app.main.services import get_groups, get_specialties, get_teachers, send_en
 T = TypeVar('T', bound=BaseModel)
 
 
+class TemplateProperties:
+    """
+    Содержит все свойства шаблона, такие как:
+        - headers
+        - hidden_headers
+        _ reference_tables
+    """
+
+    def __init__(self,
+                 headers: List[str],
+                 hidden_headers: Optional[List[str]] = None,
+                 references: Optional[Dict[str, List]] = None,
+                 connections: Optional[List[tuple]] = None):
+        self.headers = headers
+        self.hidden_headers = hidden_headers or []
+        self.references = references or {}
+        self.connections = connections
+        self.data_list = "Данные"
+        self.ref_list = "Ссылки"
+
+    @property
+    def data_headers(self):
+        return self.hidden_headers.extend(self.headers)
+
+    def ref_headers(self):
+        rh = []
+        for c1,c2 in self.connections:
+            if c1 in self.ref
+
+
+
 class ExcelImporter:
     """
-    Общий клас экспорта из Excel файла
+    Общий класс экспорта из Excel файла
     Так же нужен для создания шаблонов Excel файлов
     """
 
@@ -43,7 +74,7 @@ class ExcelImporter:
             headers.append({
                 'header': field_info['header'],
                 'hidden': hidden
-                })
+            })
 
         headers = sorted(headers, key=lambda x: not x['hidden'])
         for col_num, header in enumerate(headers, start=1):
@@ -84,11 +115,12 @@ class ExcelImporter:
                                     for field_info2 in fields:
                                         if field_info2['name'] == id_header and field_info2['header'] == header2['header']:
                                             for row in range(2, 10000):
+                                                cell_value = f'=ЕСЛИОШИБКА(ВПР({letter_dep}{row};Списки!{letter_value}2:{letter_id}{len(dependence["values"])+1};2;ЛОЖЬ);"0")'
                                                 ws.cell(
-                                                        row=row,
-                                                        column=idx2,
-                                                        value=f'=ЕСЛИОШИБКА(ВПР({letter_dep}{row};Списки!{letter_value}2:{letter_id}{len(dependence["values"])};2;ЛОЖЬ);"0")'
-                                                        )
+                                                    row=row,
+                                                    column=idx2,
+                                                    value=cell_value
+                                                )
                 i += 2
 
         for col in ws.columns:
@@ -226,12 +258,12 @@ class GroupImporter(ExcelImporter):
                 {
                     'headers': ('specialty', 'spec_id'),
                     'values': [(s.code, s.id) for s in specialties]
-                    },
+                },
                 {
                     'headers': ('class_teacher', 'class_teacher_id'),
                     'values': [(t.name, t.id) for t in teachers]
-                    }
-                ]
+                }
+            ]
         )
 
 

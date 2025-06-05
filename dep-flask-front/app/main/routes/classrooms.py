@@ -1,7 +1,7 @@
 from flask import flash, redirect, render_template, url_for
 from app.main import main_bp
+from app.main.service.view_services import delete_entity, get_class, get_classes, send_class, update_classroom
 from app.require import jwt_required
-from app.main import services
 from app.main.forms import ClassForm
 from app import app
 
@@ -11,7 +11,7 @@ CATALOG = f'http://{app.config["CATALOG"]}'
 @main_bp.route('/classes')
 @jwt_required
 def classes():
-    classes = services.get_classes(CATALOG)
+    classes = get_classes(CATALOG)
 
     for error in classes.errors:
         flash(error, 'danger')
@@ -22,7 +22,7 @@ def classes():
 @main_bp.route('/classes/<int:id>')
 @jwt_required
 def class_info(id):
-    cl = services.get_class(CATALOG, id)
+    cl = get_class(CATALOG, id)
 
     for error in cl.errors:
         flash(error, 'danger')
@@ -40,7 +40,7 @@ def create_class():
     form = ClassForm().with_choices(CATALOG)
 
     if form.validate_on_submit():
-        message, category = services.send_class(CATALOG, form)
+        message, category = send_class(CATALOG, form)
         flash(message, category)
         return redirect(url_for('main.classes'))
 
@@ -57,11 +57,11 @@ def create_class():
 def edit_class(id):
     form = ClassForm().with_choices(CATALOG)
     if form.validate_on_submit():
-        message, category = services.update_classroom(CATALOG, id, form)
+        message, category = update_classroom(CATALOG, id, form)
         flash(message, category)
         return redirect(url_for('main.classes'))
 
-    cl = services.get_class(CATALOG, id).items[0]
+    cl = get_class(CATALOG, id).items[0]
 
     form.number.data = cl.number
     form.name.data = cl.name
@@ -81,8 +81,8 @@ def edit_class(id):
 @main_bp.route('/classes/<int:id>/delete', methods=['POST'])
 @jwt_required
 def delete_class(id):
-    classroom = services.get_class(CATALOG, id).items[0]
-    message, category = services.delete_entity(
+    classroom = get_class(CATALOG, id).items[0]
+    message, category = delete_entity(
         CATALOG,
         classroom,
         'classes',

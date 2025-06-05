@@ -1,8 +1,7 @@
 from typing import List, Tuple, Type, Any
-from app.main.forms import ClassForm, DisciplineForm, GroupForm, SpecialityForm
-from app.main.forms import StudentForm, TeacherForm
 from app.main.models import BaseEntity, Specialty, Group, Student, Entity
 from app.main.models import Teacher, Discipline, Classroom
+
 
 import requests
 
@@ -209,7 +208,7 @@ def send_entity(url: str, data: List, text: str):
     ), 'danger'
 
 
-def send_specialty(api_url: str, form: SpecialityForm):
+def send_specialty(api_url: str, form: 'SpecialityForm'):
     return send_entity(
         f"{api_url}/specialties",
         [{
@@ -224,7 +223,7 @@ def send_specialty(api_url: str, form: SpecialityForm):
     )
 
 
-def send_group(api_url: str, form: GroupForm) -> Tuple[str, str]:
+def send_group(api_url: str, form: 'GroupForm') -> Tuple[str, str]:
     return send_entity(
         f"{api_url}/groups",
         [{
@@ -237,7 +236,7 @@ def send_group(api_url: str, form: GroupForm) -> Tuple[str, str]:
     )
 
 
-def send_student(api_url: str, form: StudentForm) -> Tuple[str, str]:
+def send_student(api_url: str, form: 'StudentForm') -> Tuple[str, str]:
     return send_entity(
         f"{api_url}/students",
         [{
@@ -256,7 +255,7 @@ def send_student(api_url: str, form: StudentForm) -> Tuple[str, str]:
     )
 
 
-def send_teacher(api_url: str, form: TeacherForm) -> Tuple[str, str]:
+def send_teacher(api_url: str, form: 'TeacherForm') -> Tuple[str, str]:
     return send_entity(
         f"{api_url}/teachers",
 
@@ -275,7 +274,7 @@ def send_teacher(api_url: str, form: TeacherForm) -> Tuple[str, str]:
     )
 
 
-def send_discipline(api_url: str, form: DisciplineForm) -> Tuple[str,str]:
+def send_discipline(api_url: str, form: 'DisciplineForm') -> Tuple[str,str]:
     return send_entity(
         f"{api_url}/disciplines",
         [{
@@ -292,7 +291,7 @@ def send_discipline(api_url: str, form: DisciplineForm) -> Tuple[str,str]:
     )
 
 
-def send_class(api_url: str, form: ClassForm) -> Tuple[str, str]:
+def send_class(api_url: str, form: 'ClassForm') -> Tuple[str, str]:
     return send_entity(
         f"{api_url}/classes",
         [{
@@ -324,7 +323,7 @@ def update_entity(url: str, entity: BaseEntity, text: str) -> Tuple[str, str]:
         ), 'danger'
 
 
-def update_specialty(api_url: str, id: int, form: SpecialityForm) -> Tuple[str, str]:
+def update_specialty(api_url: str, id: int, form: 'SpecialityForm') -> Tuple[str, str]:
     try:
         specialty = Specialty(
             id=id,
@@ -342,7 +341,7 @@ def update_specialty(api_url: str, id: int, form: SpecialityForm) -> Tuple[str, 
     )
 
 
-def update_group(api_url: str, id: int, form: GroupForm) -> Tuple[str, str]:
+def update_group(api_url: str, id: int, form: 'GroupForm') -> Tuple[str, str]:
     try:
         group = Group(
             id=id,
@@ -361,7 +360,7 @@ def update_group(api_url: str, id: int, form: GroupForm) -> Tuple[str, str]:
     )
 
 
-def update_student(api_url: str, id: int, form: StudentForm) -> Tuple[str, str]:
+def update_student(api_url: str, id: int, form: 'StudentForm') -> Tuple[str, str]:
     try:
         student = Student(
             id=id,
@@ -382,7 +381,7 @@ def update_student(api_url: str, id: int, form: StudentForm) -> Tuple[str, str]:
     )
 
 
-def update_teacher(api_url: str, id: int, form: TeacherForm) -> Tuple[str, str]:
+def update_teacher(api_url: str, id: int, form: 'TeacherForm') -> Tuple[str, str]:
     try:
         teacher = Teacher(
             id=id,
@@ -402,7 +401,7 @@ def update_teacher(api_url: str, id: int, form: TeacherForm) -> Tuple[str, str]:
     )
 
 
-def update_discipline(api_url: str, id: int, form: DisciplineForm) -> Tuple[str, str]:
+def update_discipline(api_url: str, id: int, form: 'DisciplineForm') -> Tuple[str, str]:
     try:
         discipline = Discipline(
             id=id,
@@ -422,7 +421,7 @@ def update_discipline(api_url: str, id: int, form: DisciplineForm) -> Tuple[str,
     )
 
 
-def update_classroom(api_url: str, id: int, form: ClassForm) -> Tuple[str, str]:
+def update_classroom(api_url: str, id: int, form: 'ClassForm') -> Tuple[str, str]:
     try:
         classroom = Classroom(
             id=id,

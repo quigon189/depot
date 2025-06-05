@@ -1,7 +1,7 @@
 from flask import flash, redirect, render_template, url_for
 from app.main import main_bp
+from app.main.service.view_services import delete_entity, get_student, get_students, send_student, update_student
 from app.require import jwt_required
-from app.main import services
 from app.main.forms import StudentForm
 from app import app
 
@@ -11,7 +11,7 @@ CATALOG = f'http://{app.config["CATALOG"]}'
 @main_bp.route('/students')
 @jwt_required
 def students():
-    students = services.get_students(CATALOG)
+    students = get_students(CATALOG)
 
     for error in students.errors:
         flash(error, 'danger')
@@ -22,7 +22,7 @@ def students():
 @main_bp.route('/students/<int:id>')
 @jwt_required
 def student_info(id):
-    student = services.get_student(CATALOG, id)
+    student = get_student(CATALOG, id)
 
     for error in student.errors:
         flash(error, 'danger')
@@ -40,7 +40,7 @@ def create_student():
     form = StudentForm().with_choices(CATALOG)
 
     if form.validate_on_submit():
-        message, category = services.send_student(CATALOG, form)
+        message, category = send_student(CATALOG, form)
         flash(message, category)
         return redirect(url_for('main.students'))
 
@@ -58,11 +58,11 @@ def edit_student(id):
     form = StudentForm().with_choices(CATALOG)
 
     if form.validate_on_submit():
-        message, category = services.update_student(CATALOG, id, form)
+        message, category = update_student(CATALOG, id, form)
         flash(message, category)
         return redirect(url_for('main.students'))
 
-    student = services.get_student(CATALOG, id).items[0]
+    student = get_student(CATALOG, id).items[0]
 
     form.last_name.data = student.last_name
     form.first_name.data = student.first_name
@@ -82,8 +82,8 @@ def edit_student(id):
 @main_bp.route('/students/<int:id>/delete', methods=['POST'])
 @jwt_required
 def delete_student(id):
-    student = services.get_student(CATALOG, id).items[0]
-    message, category = services.delete_entity(
+    student = get_student(CATALOG, id).items[0]
+    message, category = delete_entity(
         CATALOG,
         student,
         'students',

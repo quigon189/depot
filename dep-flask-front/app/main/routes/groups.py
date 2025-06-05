@@ -1,7 +1,7 @@
 from flask import flash, redirect, render_template, url_for
 from app.main import main_bp
+from app.main.service.view_services import delete_entity, get_group, get_groups, send_group, update_group, StudentsPresenter, DisciplinesPresenter
 from app.require import jwt_required
-from app.main import services
 from app.main.forms import GroupForm
 from app import app
 
@@ -11,7 +11,7 @@ CATALOG = f'http://{app.config["CATALOG"]}'
 @main_bp.route('/groups')
 @jwt_required
 def groups():
-    groups = services.get_groups(CATALOG)
+    groups = get_groups(CATALOG)
 
     for error in groups.errors:
         flash(error, 'danger')
@@ -22,7 +22,7 @@ def groups():
 @main_bp.route('/groups/<int:id>')
 @jwt_required
 def group_info(id):
-    group = services.get_group(CATALOG, id)
+    group = get_group(CATALOG, id)
 
     for error in group.errors:
         flash(error, 'danger')
@@ -31,8 +31,8 @@ def group_info(id):
         'control/view.html',
         presenter=group,
         nested=[
-            group.get_nested(services.StudentsPresenter, 'students'),
-            group.get_nested(services.DisciplinesPresenter, 'disciplines')
+            group.get_nested(StudentsPresenter, 'students'),
+            group.get_nested(DisciplinesPresenter, 'disciplines')
         ]
     )
 
@@ -43,7 +43,7 @@ def create_group():
     form = GroupForm().with_choices(CATALOG)
 
     if form.validate_on_submit():
-        message, category = services.send_group(CATALOG, form)
+        message, category = send_group(CATALOG, form)
         flash(message, category)
         return redirect(url_for('main.groups'))
 
@@ -61,11 +61,11 @@ def edit_group(id):
     form = GroupForm().with_choices(CATALOG)
 
     if form.validate_on_submit():
-        message, category = services.update_group(CATALOG, id, form)
+        message, category = update_group(CATALOG, id, form)
         flash(message, category)
         return redirect(url_for('main.groups'))
 
-    group = services.get_group(CATALOG, id).items[0]
+    group = get_group(CATALOG, id).items[0]
 
     form.number.data = group.number
     form.year_formed.data = group.year_formed
@@ -83,8 +83,8 @@ def edit_group(id):
 @main_bp.route('/groups/<int:id>/delete', methods=['POST'])
 @jwt_required
 def delete_group(id):
-    group = services.get_group(CATALOG, id).items[0]
-    message, category = services.delete_entity(
+    group = get_group(CATALOG, id).items[0]
+    message, category = delete_entity(
         CATALOG,
         group,
         'groups',

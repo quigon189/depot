@@ -1,7 +1,7 @@
 from flask import flash, redirect, render_template, url_for
 from app.main import main_bp
+from app.main.service.view_services import delete_entity, get_discipline, get_disciplines, send_discipline, update_discipline
 from app.require import jwt_required
-from app.main import services
 from app.main.forms import DisciplineForm
 from app import app
 
@@ -11,7 +11,7 @@ CATALOG = f'http://{app.config["CATALOG"]}'
 @main_bp.route('/disciplines')
 @jwt_required
 def disciplines():
-    disciplines = services.get_disciplines(CATALOG)
+    disciplines = get_disciplines(CATALOG)
 
     for error in disciplines.errors:
         flash(error, 'danger')
@@ -22,7 +22,7 @@ def disciplines():
 @main_bp.route('/disciplines/<int:id>')
 @jwt_required
 def discipline_info(id):
-    discipline = services.get_discipline(CATALOG, id)
+    discipline = get_discipline(CATALOG, id)
 
     for error in discipline.errors:
         flash(error, 'danger')
@@ -40,7 +40,7 @@ def create_discipline():
     form = DisciplineForm().with_choices(CATALOG)
 
     if form.validate_on_submit():
-        message, category = services.send_discipline(CATALOG, form)
+        message, category = send_discipline(CATALOG, form)
         flash(message, category)
         return redirect(url_for('main.disciplines'))
 
@@ -57,11 +57,11 @@ def create_discipline():
 def edit_discipline(id):
     form = DisciplineForm().with_choices(CATALOG)
     if form.validate_on_submit():
-        message, category = services.update_discipline(CATALOG, id, form)
+        message, category = update_discipline(CATALOG, id, form)
         flash(message, category)
         return redirect(url_for('main.disciplines'))
 
-    discipline = services.get_discipline(CATALOG, id).items[0]
+    discipline = get_discipline(CATALOG, id).items[0]
 
     form.code.data = discipline.code
     form.name.data = discipline.name
@@ -80,8 +80,8 @@ def edit_discipline(id):
 @main_bp.route('/disciplines/<int:id>/delete', methods=['POST'])
 @jwt_required
 def delete_discipline(id):
-    discipline = services.get_discipline(CATALOG, id).items[0]
-    message, category = services.delete_entity(
+    discipline = get_discipline(CATALOG, id).items[0]
+    message, category = delete_entity(
         CATALOG,
         discipline,
         'disciplines',

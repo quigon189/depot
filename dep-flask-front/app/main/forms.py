@@ -3,7 +3,7 @@ from flask_wtf.file import FileField, FileRequired, FileAllowed
 from wtforms import StringField, IntegerField, SelectField, TextAreaField
 from wtforms.validators import DataRequired
 
-from app.main import services
+from app.main.service.view_services import get_groups, get_specialties, get_teachers
 
 
 class SpecialityForm(FlaskForm):
@@ -54,8 +54,8 @@ class GroupForm(FlaskForm):
     )
 
     def with_choices(self, api: str) -> "GroupForm":
-        specialties = services.get_specialties(api).items
-        teachers = services.get_teachers(api).items
+        specialties = get_specialties(api).items
+        teachers = get_teachers(api).items
         self.spec_id.choices = [(s.id, s.view_name) for s in specialties]
         self.class_teacher_id.choices = [(t.id, t.name) for t in teachers]
         return self
@@ -119,7 +119,7 @@ class StudentForm(FlaskForm):
     )
 
     def with_choices(self, api: str) -> 'StudentForm':
-        groups = services.get_groups(api).items
+        groups = get_groups(api).items
         self.group_id.choices = [(g.id, g.name) for g in groups]
         return self
 
@@ -217,7 +217,7 @@ class DisciplineForm(FlaskForm):
     )
 
     def with_choices(self, api: str) -> 'DisciplineForm':
-        groups = services.get_groups(api).items
+        groups = get_groups(api).items
         self.group_id.choices = [(g.id, g.name) for g in groups]
         return self
 
@@ -259,7 +259,7 @@ class ClassForm(FlaskForm):
     )
 
     def with_choices(self, api: str) -> 'ClassForm':
-        teachers = services.get_teachers(api).items
+        teachers = get_teachers(api).items
         self.teacher_id.choices = [(t.id, t.name) for t in teachers]
         return self
 

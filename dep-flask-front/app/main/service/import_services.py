@@ -1,15 +1,14 @@
 import io
-import json
 from typing import Dict, List, Optional, Tuple, Type, TypeVar
 
-from openpyxl import Workbook, cell, load_workbook
+from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import BaseModel, ValidationError
 
 from app.main.models import Classroom, Discipline, Group, Specialty, Student, Teacher
-from app.main.services import get_groups, get_specialties, get_teachers, send_entity
+from app.main.service.view_services import get_groups, get_specialties, get_teachers, send_entity
 
 
 T = TypeVar('T', bound=BaseModel)
@@ -25,24 +24,30 @@ class TemplateProperties:
 
     def __init__(self,
                  headers: List[str],
-                 hidden_headers: Optional[List[str]] = None,
-                 references: Optional[Dict[str, List]] = None,
-                 connections: Optional[List[tuple]] = None):
+                 references: Optional[Dict[tuple, List[tuple]]] = None):
         self.headers = headers
-        self.hidden_headers = hidden_headers or []
         self.references = references or {}
-        self.connections = connections
+        if references:
+            self.hidden_headers = [h for (_,h) in references.keys()]
+        else:
+            self.hidden_headers = []
         self.data_list = "Данные"
         self.ref_list = "Ссылки"
 
     @property
-    def data_headers(self):
-        return self.hidden_headers.extend(self.headers)
+    def data_headers(self) -> List[str]:
+        return self.hidden_headers + self.headers
 
-    def ref_headers(self):
+    @property
+    def ref_headers(self) -> List[str]:
         rh = []
-        for c1,c2 in self.connections:
-            if c1 in self.ref
+        for (r1,r2) in self.references.keys():
+            rh.append(str(r1))
+            rh.append(str(r2))
+        return rh
+
+    def ref_values(self, ref: Tuple[str,str]) -> List[Tuple[str,str]]:
+        return [r for r in self.references[ref]]
 
 
 
@@ -52,76 +57,66 @@ class ExcelImporter:
     Так же нужен для создания шаблонов Excel файлов
     """
 
-    def __init__(self, model: Type[T], template_properties: List[str], dependensies: Optional[List[Dict]] = None):
+    def __init__(self, model: Type[T], props: TemplateProperties):
         self.model = model
-        self.dependensies = dependensies or {}
-        self.template_properties = template_properties
+        self.props = props
         schema = model.model_json_schema()
         m = schema['$ref'].split('/')[-1]
         self.schema = schema['$defs'][m]
+        self.max_records = 1000
 
     def generate_template(self) -> io.BytesIO:
         wb = Workbook()
         ws = wb.active or wb.worksheets[0]
 
-        ws.title = self.schema.get('title', 'Data')
+        ws.title = self.props.data_list
 
         fields = self._get_fields()
 
-        headers = []
-        for field_info in fields:
-            hidden = not field_info['name'] in self.template_properties
-            headers.append({
-                'header': field_info['header'],
-                'hidden': hidden
-            })
-
-        headers = sorted(headers, key=lambda x: not x['hidden'])
-        for col_num, header in enumerate(headers, start=1):
-            ws.cell(row=1, column=col_num, value=header['header'])
-            if header['hidden']:
+        for col_num, header in enumerate(self.props.data_headers, start=1):
+            ws.cell(row=1, column=col_num, value=fields[header]['header'])
+            if fields[header]['type'] == 'string':
+                for row in range(2, self.max_records+2):
+                    ws.cell(row=row, column=col_num).number_format = "@"
+            if header in self.props.hidden_headers:
                 col_letter = ws.cell(row=1, column=col_num).column_letter
                 ws.column_dimensions[col_letter].hidden = True
 
-        if self.dependensies:
-            list_sheet = wb.create_sheet('Списки')
-            i = 1
-            for dependence in self.dependensies:
-                letter_value = get_column_letter(i)
-                letter_id = get_column_letter(i+1)
-                v_header, id_header = dependence['headers']
-                list_sheet[f'{letter_value}1'] = v_header
-                list_sheet[f'{letter_id}1'] = id_header
-                for idx, (value, id) in enumerate(dependence['values'], start=2):
-                    list_sheet[f'{letter_value}{idx}'] = value
-                    list_sheet[f'{letter_id}{idx}'] = id
+        if self.props.ref_headers:
+            rs = wb.create_sheet(self.props.ref_list)
+            ref_headers = [fields[h]['header'] for h in self.props.ref_headers]
+            rs.append(ref_headers)
+            refs = self.props.references
+            for (rh1, rh2), data in refs.items():
+                idx1 = self.props.ref_headers.index(rh1) + 1
+                idx2 = self.props.ref_headers.index(rh2) + 1
 
-                if v_header in self.template_properties:
+                let1 = get_column_letter(idx1)
+                let2 = get_column_letter(idx2)
 
-                    dv = DataValidation(
+                for row, (rd1, rd2) in enumerate(data, start=2):
+                    rs[f'{let1}{row}'] = rd1
+                    rs[f'{let2}{row}'] = rd2
+
+                dv = DataValidation(
                         type='list',
-                        formula1=f'=Списки!${letter_value}$2:${letter_value}${len(dependence["values"])+1}',
+                        formula1=f'={self.props.ref_list}!${let1}$2:${let1}${len(data)+1}',
                         showErrorMessage=True
-                    )
-                    for idx, header in enumerate(headers, start=1):
-                        for field_info in fields:
-                            if field_info['name'] == v_header and field_info['header'] == header['header']:
-                                letter_dep = get_column_letter(idx)
+                        )
 
-                                dv.add(f'{letter_dep}2:{letter_dep}1048576')
-                                ws.add_data_validation(dv)
+                if rh1 in self.props.data_headers:
+                    dv_idx = self.props.data_headers.index(rh1)+1
+                    dv_let = get_column_letter(dv_idx)
 
-                                for idx2, header2 in enumerate(headers, start=1):
-                                    for field_info2 in fields:
-                                        if field_info2['name'] == id_header and field_info2['header'] == header2['header']:
-                                            for row in range(2, 10000):
-                                                cell_value = f'=ЕСЛИОШИБКА(ВПР({letter_dep}{row};Списки!{letter_value}2:{letter_id}{len(dependence["values"])+1};2;ЛОЖЬ);"0")'
-                                                ws.cell(
-                                                    row=row,
-                                                    column=idx2,
-                                                    value=cell_value
-                                                )
-                i += 2
+                    dv.add(f'{dv_let}2:{dv_let}{self.max_records+1}')
+                    ws.add_data_validation(dv)
+
+                    if rh2 in self.props.data_headers:
+                        f_idx = self.props.data_headers.index(rh2)+1
+                        f_let = get_column_letter(f_idx)
+
+                        for row in range(2, self.max_records+2):
+                            ws[f'{f_let}{row}'].value = f'=IFERROR(VLOOKUP({dv_let}{row}, {self.props.ref_list}!${let1}$2:${let2}${len(data)+1}, 2, FALSE), "")'
 
         for col in ws.columns:
             column = col[0].column_letter
@@ -135,7 +130,7 @@ class ExcelImporter:
 
     def import_data(self, file_stream: io.BufferedReader, skip_rows: int = 1) -> List[T]:
         try:
-            wb = load_workbook(filename=file_stream)
+            wb = load_workbook(filename=file_stream, data_only=True)
             ws = wb.worksheets[0]
 
             header_row = list(ws.iter_rows(
@@ -146,25 +141,30 @@ class ExcelImporter:
                 raise ValueError(
                     "Отсутствуют заголовки в первой строке шаблона")
 
-            missing_fields = []
+            missing_headers = []
             fields = self._get_fields()
-            for propertie in self.template_properties:
-                for field in fields:
-                    if field['name'] == propertie and not field['header'] in headers:
-                        missing_fields.append(field)
-                        break
+            for h in self.props.headers:
+                if not fields[h]['header'] in headers:
+                    missing_headers.append(fields[h]['header'])
 
-            if missing_fields:
+            if missing_headers:
                 raise ValueError(
-                    "В шаблоне отсутствуют следующие столбцы: ",
-                    "".join([f['header'] for f in missing_fields])
+                    "В шаблоне отсутствуют следующие столбцы: " + ", ".join(missing_headers)
                 )
 
             models = []
             errors = []
 
+            ref_headers = [h for (h,_) in self.props.references.keys()]
             for row_idx, row in enumerate(ws.iter_rows(min_row=skip_rows+1, values_only=True), start=skip_rows+1):
+                if not any(row):
+                    continue
+
                 row_dict = self._row_to_dict(row, headers)
+
+                for header in ref_headers:
+                    if header in row_dict.keys():
+                        del row_dict[header]
 
                 try:
                     model = self.model(**row_dict)
@@ -187,16 +187,15 @@ class ExcelImporter:
         except Exception as e:
             raise ValueError(str(e).strip())
 
-    def _get_fields(self) -> List[Dict]:
-        fields = []
+    def _get_fields(self) -> Dict[str,Dict]:
+        fields = {}
 
         for field_name, field_info in self.schema['properties'].items():
-            fields.append({
-                'name': field_name,
+            fields[field_name] = {
                 'header': field_info.get('title', field_name),
                 'type': field_info.get('type', 'string'),
                 'required': field_name in self.schema.get('required', [])
-            })
+            }
 
         return fields
 
@@ -206,9 +205,9 @@ class ExcelImporter:
         fields = self._get_fields()
 
         for header, value in zip(headers, row):
-            for field in fields:
+            for name, field in fields.items():
                 if field['header'] == header:
-                    row_dict[field['name']] = self._parse_value(value, field)
+                    row_dict[name] = self._parse_value(value, field)
                     break
 
         return row_dict
@@ -242,7 +241,7 @@ class SpecialtyImporter(ExcelImporter):
     def __init__(self, api: str):
         super().__init__(
             model=Specialty,
-            template_properties=['code', 'name', 'short_name']
+            props=TemplateProperties(headers=['code', 'name', 'short_name'])
         )
 
 
@@ -252,18 +251,13 @@ class GroupImporter(ExcelImporter):
         teachers = get_teachers(api).items
         super().__init__(
             model=Group,
-            template_properties=['number', 'year_formed',
-                                 'specialty', 'class_teacher'],
-            dependensies=[
-                {
-                    'headers': ('specialty', 'spec_id'),
-                    'values': [(s.code, s.id) for s in specialties]
-                },
-                {
-                    'headers': ('class_teacher', 'class_teacher_id'),
-                    'values': [(t.name, t.id) for t in teachers]
-                }
-            ]
+            props=TemplateProperties(
+                headers=['number', 'year_formed', 'specialty', 'class_teacher'],
+                references={
+                    ('specialty','spec_id') : [(s.code, s.id) for s in specialties],
+                    ('class_teacher','class_teacher_id') : [(t.name, t.id) for t in teachers]
+                    }
+                )
         )
 
 
@@ -272,12 +266,12 @@ class StudentImporter(ExcelImporter):
         groups = get_groups(api).items
         super().__init__(
             model=Student,
-            template_properties=['last_name', 'first_name', 'middle_name',
-                                 'group', 'birth_date', 'phone'],
-            dependensies={
-                'group': [g.name for g in groups],
-                'group_id': [g.id for g in groups],
-            }
+            props=TemplateProperties(
+                headers=['last_name', 'first_name', 'middle_name', 'group', 'birth_date', 'phone'],
+                references={
+                    ('group','group_id'): [(g.name, g.id) for g in groups]
+                    }
+                )
         )
 
 
@@ -285,8 +279,9 @@ class TeacherImporter(ExcelImporter):
     def __init__(self, api: str):
         super().__init__(
             model=Teacher,
-            template_properties=['last_name', 'first_name', 'middle_name',
-                                 'birth_date', 'phone'],
+            props=TemplateProperties(
+                headers=['last_name', 'first_name', 'middle_name', 'birth_date', 'phone']
+                )
         )
 
 
@@ -295,11 +290,12 @@ class DisciplineImporter(ExcelImporter):
         groups = get_groups(api).items
         super().__init__(
             model=Discipline,
-            template_properties=['code', 'name', 'semester', 'hours', 'group'],
-            dependensies={
-                'group': [g.name for g in groups],
-                'group_id': [g.id for g in groups],
-            }
+            props=TemplateProperties(
+                headers=['code', 'name', 'semester', 'hours', 'group'],
+                references={
+                    ('group','group_id'): [(g.name, g.id) for g in groups]
+                    }
+                )
         )
 
 
@@ -308,13 +304,12 @@ class ClassroomImporter(ExcelImporter):
         teachers = get_teachers(api).items
         super().__init__(
             model=Classroom,
-            template_properties=['number', 'name', 'type',
-                                 'capacity', 'equipment', 'teacher'],
-            dependensies={
-                'type': ['Кабинет', 'Лаборатория', 'Полигон'],
-                'teacher': [t.name for t in teachers],
-                'teacher_id': [t.id for t in teachers],
-            }
+            props=TemplateProperties(
+                headers=['number', 'name', 'type', 'capacity', 'equipment', 'teacher'],
+                references={
+                    ('teacher', 'teacher_id'): [(t.name, t.id) for t in teachers],
+                    }
+                )
         )
 
 

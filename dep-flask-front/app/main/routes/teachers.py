@@ -1,7 +1,7 @@
 from flask import flash, redirect, render_template, url_for
 from app.main import main_bp
+from app.main.service.view_services import ClassesPresenter, GroupsPresenter, delete_entity, get_teacher, get_teachers, send_teacher, update_teacher
 from app.require import jwt_required
-from app.main import services
 from app.main.forms import TeacherForm
 from app import app
 
@@ -11,7 +11,7 @@ CATALOG = f'http://{app.config["CATALOG"]}'
 @main_bp.route('/teachers')
 @jwt_required
 def teachers():
-    teachers = services.get_teachers(CATALOG)
+    teachers = get_teachers(CATALOG)
 
     for error in teachers.errors:
         flash(error, 'danger')
@@ -22,7 +22,7 @@ def teachers():
 @main_bp.route('/teachers/<int:id>')
 @jwt_required
 def teacher_info(id):
-    teacher = services.get_teacher(CATALOG, id)
+    teacher = get_teacher(CATALOG, id)
 
     for error in teacher.errors:
         flash(error, 'danger')
@@ -31,8 +31,8 @@ def teacher_info(id):
         'control/view.html',
         presenter=teacher,
         nested=[
-            teacher.get_nested(services.GroupsPresenter, 'groups'),
-            teacher.get_nested(services.ClassesPresenter, 'classes'),
+            teacher.get_nested(GroupsPresenter, 'groups'),
+            teacher.get_nested(ClassesPresenter, 'classes'),
         ]
     )
 
@@ -43,7 +43,7 @@ def create_teacher():
     form = TeacherForm()
 
     if form.validate_on_submit():
-        message, category = services.send_teacher(CATALOG, form)
+        message, category = send_teacher(CATALOG, form)
         flash(message, category)
         return redirect(url_for('main.teachers'))
 
@@ -61,11 +61,11 @@ def edit_teacher(id):
     form = TeacherForm()
 
     if form.validate_on_submit():
-        message, category = services.update_teacher(CATALOG, id, form)
+        message, category = update_teacher(CATALOG, id, form)
         flash(message, category)
         return redirect(url_for('main.teachers'))
 
-    teacher = services.get_teacher(CATALOG, id).items[0]
+    teacher = get_teacher(CATALOG, id).items[0]
 
     form.last_name.data = teacher.last_name
     form.first_name.data = teacher.first_name
@@ -84,8 +84,8 @@ def edit_teacher(id):
 @main_bp.route('/teachers/<int:id>/delete', methods=['POST'])
 @jwt_required
 def delete_teacher(id):
-    teacher = services.get_teacher(CATALOG, id).items[0]
-    message, category = services.delete_entity(
+    teacher = get_teacher(CATALOG, id).items[0]
+    message, category = delete_entity(
         CATALOG,
         teacher,
         'teachers',

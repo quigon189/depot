@@ -1,4 +1,4 @@
-from typing import Annotated, Literal, List, Optional, Union
+from typing import Annotated, Dict, Literal, List, Optional, Union
 from pydantic import BaseModel, Field
 
 Entity = Union['Specialty', 'Group', 'Student',
@@ -38,7 +38,7 @@ class Specialty(BaseEntity):
             return len(self.groups)
         return 0
 
-    def to_dict(self):
+    def to_dict(self) -> Dict:
         return {
             'code': self.code,
             'name': self.name,
@@ -64,7 +64,7 @@ class Teacher(BaseEntity):
             self.middle_name
         )
 
-    def to_dict(self):
+    def to_dict(self) -> Dict:
         return {
             'first_name': self.first_name,
             'middle_name': self.middle_name,
@@ -83,6 +83,16 @@ class Student(BaseEntity):
 
     group_id: int
     group: Optional["Group"] = Field(None, title='Группа')
+
+    def to_dict(self) -> Dict:
+        return {
+                'first_name': self.first_name,
+                'middle_name': self.middle_name,
+                'last_name': self.last_name,
+                'birth_date': self.birth_date,
+                'phone': self.phone,
+                'group_id': self.group_id
+                }
 
     @property
     def name(self) -> str:
@@ -112,6 +122,14 @@ class Group(BaseEntity):
 
     students: Optional[List[Student]] = None
     disciplines: Optional[List["Discipline"]] = None
+
+    def to_dict(self) -> Dict:
+        return {
+                'number': self.number,
+                'year_formed': self.year_formed,
+                'spec_id': self.spec_id,
+                'class_teacher_id': self.class_teacher_id
+                }
 
     @property
     def name(self) -> str:
@@ -152,6 +170,15 @@ class Discipline(BaseEntity):
     group_id: int
     group: Optional[Group] = Field(None, title='Группа')
 
+    def to_dict(self) -> Dict:
+        return {
+                'code': self.code,
+                'name': self.name,
+                'semester': self.semester,
+                'hours': self.hours,
+                'group_id': self.group_id
+                }
+
     @property
     def view_name(self) -> str:
         return f"{self.code}.{self.name}"
@@ -173,6 +200,16 @@ class Classroom(BaseEntity):
 
     teacher_id: int
     teacher: Optional[Teacher] = Field(None, title='Преподаватель')
+
+    def to_dict(self) -> Dict:
+        return {
+                'number': self.number,
+                'name': self.name,
+                'type': self.type,
+                'capacity': self.capacity,
+                'equipment': self.equipment,
+                'teacher_id': self.teacher_id
+                }
 
     @property
     def class_teacher_name(self) -> str:

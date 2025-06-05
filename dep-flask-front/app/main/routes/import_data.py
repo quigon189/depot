@@ -1,7 +1,7 @@
 import os
 from flask import flash, redirect, render_template, request, send_file, url_for
 from app.main import main_bp
-from app.main.service.import_classes import generate_template, import_from_template
+from app.main.service.import_services import generate_template, import_from_template
 from app.require import jwt_required
 from app.main.forms import ImportForm
 from app import app

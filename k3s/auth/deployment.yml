@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: depot
+  labels:
+    app: go-auth
+  name: go-auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: go-auth
+  template:
+    metadata:
+      labels:
+        app: go-auth
+    spec:
+      containers:
+      - name: go-auth
+        env:
+        - name: SECRET_KEY
+          value: "123"
+        image: localhost/depot_go-auth:latest
+        ports:
+        - containerPort: 8080

@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: depot
+  labels:
+    app: flask-front
+  name: flask-front
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: flask-front
+  template:
+    metadata:
+      labels:
+        app: flask-front
+    spec:
+      containers:
+      - name: flask-front
+        image: localhost/depot_flask-front:latest
+        env:
+        - name: AUTH
+          value: "go-auth:8080/login"
+        - name: CATALOG
+          value: "go-catalog:8080"
+        - name: SECRET_KEY
+          value: "123"
+        ports:
+        - containerPort: 5000
+        volumeMounts:
+        - mountPath: /app/app
+          name: flask-front-app
+      volumes:
+      - hostPath:
+          path: /home/admin/depot/dep-flask-front/app
+          type: Directory
+        name: flask-front-app
+

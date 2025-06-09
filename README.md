@@ -1,10 +1,10 @@
 # 🎓 DEPOT
 
-[![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go)](https://golang.org/)
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python)](https://python.org)
+[![Go](https://img.shields.io/badge/Go-1.24+-00ADD8?logo=go)](https://golang.org/)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python)](https://python.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-4169E1?logo=postgresql)](https://postgresql.org)
-[![Kubernetes](https://img.shields.io/badge/k3s-v1.29+-326CE5?logo=kubernetes)](https://k3s.io)
-[![Podman](https://img.shields.io/badge/Podman-4.0+-892CA0?logo=podman)](https://podman.io)
+[![Kubernetes](https://img.shields.io/badge/k3s-v1.32+-326CE5?logo=kubernetes)](https://k3s.io)
+[![Podman](https://img.shields.io/badge/Podman-5.4+-892CA0?logo=podman)](https://podman.io)
 
 Веб-приложение для управления данными учебной организации с микросервисной архитектурой, включая учет студентов и преподавателей, с поддержкой импорта данных из Excel.
 

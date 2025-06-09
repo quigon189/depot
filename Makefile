@@ -20,9 +20,9 @@ else
 endif
 
 deploy:
-	podman build --force-rm --tag $(LOCAL_REPO)/go-auth:$(VERSION)
-	podman build --force-rm --tag $(LOCAL_REPO)/go-catalog:$(VERSION)
-	podman build --force-rm --tag $(LOCAL_REPO)/flask-front:$(VERSION)
+	podman build --force-rm --tag $(LOCAL_REPO)/go-auth:$(VERSION) ./dep-go-auth
+	podman build --force-rm --tag $(LOCAL_REPO)/go-catalog:$(VERSION) ./dep-go-catalog
+	podman build --force-rm --tag $(LOCAL_REPO)/flask-front:$(VERSION) ./dep-flask-front
 	podman push $(LOCAL_REPO)/go-auth:$(VERSION)
 	podman push $(LOCAL_REPO)/go-catalog:$(VERSION)
 	podman push $(LOCAL_REPO)/flask-front:$(VERSION)

@@ -13,7 +13,7 @@ case $1 in
 		
 		podman-compose up -d >> ./logs/start.log
 		sleep 10
-		http :18080/add name=laa email=laa@gmail.com password=ghjgecr123 >> ./logs/start.log
+		http :18080/add name=admin email=admin@depot.local password=password >> ./logs/start.log
 		
 		./dep-go-catalog/test/test.sh 18081 >> ./logs/start.log
 

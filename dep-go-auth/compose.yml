@@ -1,5 +1,0 @@
-services:
-  go-repo:
-    build: .
-    ports:
-      - 8080:8080

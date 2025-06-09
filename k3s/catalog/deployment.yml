@@ -3,23 +3,23 @@ kind: Deployment
 metadata:
   namespace: depot
   labels:
-    app: go-auth
-  name: go-auth
+    app: go-catalog
+  name: go-catalog
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: go-auth
+      app: go-catalog
   template:
     metadata:
       labels:
-        app: go-auth
+        app: go-catalog
     spec:
       containers:
-      - name: go-auth
+      - name: go-catalog
         env:
         - name: SECRET_KEY
           value: "123"
-        image: "192.168.1.14:9000/go-auth:1.0.0"
+        image: "192.168.1.14:9000/go-catalog:1.0.0"
         ports:
         - containerPort: 8080

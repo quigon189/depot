@@ -17,22 +17,14 @@ spec:
     spec:
       containers:
       - name: flask-front
-        image: localhost/depot_flask-front:latest
+        image: 192.168.1.14:9000/flask-front:1.0.0
         env:
         - name: AUTH
-          value: "go-auth:8080/login"
+          value: "go-auth-service:8080/login"
         - name: CATALOG
-          value: "go-catalog:8080"
+          value: "go-catalog-service:8080"
         - name: SECRET_KEY
           value: "123"
         ports:
         - containerPort: 5000
-        volumeMounts:
-        - mountPath: /app/app
-          name: flask-front-app
-      volumes:
-      - hostPath:
-          path: /home/admin/depot/dep-flask-front/app
-          type: Directory
-        name: flask-front-app
 

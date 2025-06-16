@@ -14,6 +14,7 @@ const (
 		id            INTEGER PRIMARY KEY AUTOINCREMENT,
 		name          TEXT UNIQUE,
 		email         TEXT UNIQUE,
+		role		  TEXT
 		password_hash TEXT
 	);
 	`
@@ -22,13 +23,14 @@ const (
 		id            SERIAL PRIMARY KEY,
 		name          varchar(30) UNIQUE,
 		email         varchar(50) UNIQUE,
+		role          varchar(10),
 		password_hash varchar(255)
 	)
 	`
 	DropUsers        = `DROP TABLE IF EXISTS users`
-	InsertUser       = `INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id`
-	SelectUsers      = `SELECT id, name, email FROM users`
-	SelectUserByName = `SELECT id,name,email,password_hash FROM users WHERE name=$1`
+	InsertUser       = `INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id`
+	SelectUsers      = `SELECT id,name,email,role FROM users`
+	SelectUserByName = `SELECT id,name,email,role,password_hash FROM users WHERE name=$1`
 )
 
 type SqlRepo struct {
@@ -74,7 +76,7 @@ func (r *SqlRepo) Close(drop bool) {
 
 func (r *SqlRepo) Add(u *User) (int, error) {
 	var id int
-	err := r.db.QueryRow(InsertUser, u.Name, u.Email, u.PasswordHash).Scan(&id)
+	err := r.db.QueryRow(InsertUser, u.Name, u.Email, u.PasswordHash, u.Role).Scan(&id)
 	if err != nil {
 		return -1, err
 	}
@@ -83,7 +85,7 @@ func (r *SqlRepo) Add(u *User) (int, error) {
 
 func (r *SqlRepo) GetByName(name string) (*User, error) {
 	var u User
-	err := r.db.QueryRow(SelectUserByName, name).Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash)
+	err := r.db.QueryRow(SelectUserByName, name).Scan(&u.ID, &u.Name, &u.Email, &u.Role, &u.PasswordHash)
 	if err != nil {
 		return nil, err
 	}

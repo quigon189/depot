@@ -16,6 +16,7 @@ type Claims struct {
 	UserID    int    `json:"user_id"`
 	UserName  string `json:"user_name"`
 	UserEmail string `json:"user_email"`
+	UserRole  string `json:"user_role"`
 	jwt.RegisteredClaims
 }
 
@@ -28,6 +29,7 @@ func (a *Auth) GenerateToken(user *repo.User) (string, error) {
 		UserID:    user.ID,
 		UserName:  user.Name,
 		UserEmail: user.Email,
+		UserRole:  user.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(TokenExpiration)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

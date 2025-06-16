@@ -22,6 +22,7 @@ func (s *server) UserAdd(w http.ResponseWriter, r *http.Request) {
 		Name     string `json:"name"`
 		Email    string `json:"email"`
 		Password string `json:"password"`
+		Role     string `json:"role"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
@@ -34,6 +35,7 @@ func (s *server) UserAdd(w http.ResponseWriter, r *http.Request) {
 		request.Name,
 		request.Email,
 		request.Password,
+		request.Role,
 	)
 
 	if err != nil {

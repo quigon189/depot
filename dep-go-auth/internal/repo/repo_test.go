@@ -6,8 +6,9 @@ func TestNewUser(t *testing.T) {
 	username := "Test"
 	pass := "123123123"
 	email := "test@test.com"
+	role := "admin"
 
-	u, err := NewUser(username, email, pass)
+	u, err := NewUser(username, email, pass, role)
 	if err != nil {
 		t.Error("Error NewUser:", err)
 	}
@@ -25,7 +26,9 @@ func TestRepoAddUser(t *testing.T) {
 	name := "test"
 	pass := "123123123"
 	email := "test@test.com"
-	u, _ := NewUser(name, email, pass)
+	role := "admin"
+
+	u, _ := NewUser(name, email, pass, role)
 
 	userRepo := NewSqliteRepo("test.db")
 	defer userRepo.Close(true)
@@ -40,7 +43,9 @@ func TestRepoUserGetByName(t *testing.T) {
 	name := "test"
 	pass := "123123123"
 	email := "test@test.com"
-	u, _ := NewUser(name, email, pass)
+	role := "admin"
+
+	u, _ := NewUser(name, email, pass, role)
 
 	userRepo := NewSqliteRepo("test.db")
 	defer userRepo.Close(true)

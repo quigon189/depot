@@ -3,18 +3,22 @@ package repo
 import (
 	"errors"
 	"net/mail"
+	"slices"
 
 	"golang.org/x/crypto/bcrypt"
 )
+
+var roles = []string{"admin", "student", "teacher", "manager"}
 
 type User struct {
 	ID           int    `json:"id"`
 	Name         string `json:"name"`
 	Email        string `json:"email"`
+	Role         string `json:"role"`
 	PasswordHash string `json:"-"`
 }
 
-func NewUser(name, email, password string) (*User, error) {
+func NewUser(name, email, password, role string) (*User, error) {
 	u := User{}
 
 	if len([]rune(name)) < 3 {
@@ -30,8 +34,13 @@ func NewUser(name, email, password string) (*User, error) {
 		return nil, errors.New("bad email")
 	}
 
+	if !slices.Contains(roles, role) {
+		return nil, errors.New("bad role")
+	}
+
 	u.Name = name
 	u.Email = email
+	u.Role = role
 	err = u.SetPassword(password)
 	if err != nil {
 		return nil, err

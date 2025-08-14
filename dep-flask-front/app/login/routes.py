@@ -4,7 +4,7 @@ import requests
 from app.login import login_bp
 from app.login.forms import LoginForm
 from app import app
-from app.require import jwt_required
+from app.require import jwt_required, role_required
 
 BACKEND = f'http://{app.config["AUTH"]}'
 
@@ -15,6 +15,13 @@ def logout():
     resp = make_response(redirect(url_for('main.index')))
     resp.delete_cookie("auth_token")
     return resp
+
+
+@login_bp.route('/test')
+@role_required('admin')
+def test():
+    flash('Доступ открыт', 'success')
+    return redirect(url_for('main.index'))
 
 
 @login_bp.route('/login', methods=['GET', 'POST'])

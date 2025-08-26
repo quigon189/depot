@@ -4,7 +4,7 @@
 // - protoc             v3.21.12
 // source: proto/auth/auth.proto
 
-package depot_auth_v1
+package auth_grpc
 
 import (
 	context "context"

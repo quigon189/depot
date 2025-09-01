@@ -20,3 +20,7 @@ func NewGRPCServer(cfg *config.Config, authService *service.AuthService) *GRPCSe
 		server:      grpc.NewServer(),
 	}
 }
+
+func (s *GRPCServer) Start() {
+
+}

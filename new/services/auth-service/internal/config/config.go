@@ -7,14 +7,24 @@ import (
 )
 
 type Config struct {
-	Server  ServerConfig  `yaml:"server"`
-	Logging LoggingConfig `yaml:"logging"`
+	Server   ServerConfig  `yaml:"server"`
+	Logging  LoggingConfig `yaml:"logging"`
+	Database DBConfig      `yaml:"database"`
 }
 
 type ServerConfig struct {
-	Address      string        `yaml:"address"`
+	Address  string `yaml:"address"`
 	GRPCPort string `yaml:"grpc_port"`
 	HttpPort string `yaml:"http_port"`
+}
+
+type DBConfig struct {
+	Host           string `yaml:"host"`
+	Port           int    `yaml:"port"`
+	User           string `yaml:"user"`
+	Password       string `yaml:"password"`
+	Name           string `yaml:"name"`
+	MigrationsPath string `yaml:"migrations_path"`
 }
 
 type LoggingConfig struct {

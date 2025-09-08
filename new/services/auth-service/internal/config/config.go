@@ -2,7 +2,6 @@ package config
 
 import (
 	"os"
-	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -14,6 +13,8 @@ type Config struct {
 
 type ServerConfig struct {
 	Address      string        `yaml:"address"`
+	GRPCPort string `yaml:"grpc_port"`
+	HttpPort string `yaml:"http_port"`
 }
 
 type LoggingConfig struct {

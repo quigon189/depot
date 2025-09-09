@@ -19,8 +19,6 @@ type RefreshToken struct {
 	ExpiresAt time.Time `db:"expires_at"`
 	CreatedAt time.Time `db:"created_at"`
 	RevokedAt time.Time `db:"revoked_at"`
-	UserAgent string    `db:"user_agent"`
-	IPAddress string    `db:"ip_address"`
 }
 
 type Role struct {

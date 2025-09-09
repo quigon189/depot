@@ -14,9 +14,7 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
 	user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 	expires_at TIMESTAMP NOT NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	revoked_at TIMESTAMP,
-	user_agent TEXT,
-	ip_address VARCHAR(45)
+	revoked_at TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS roles (

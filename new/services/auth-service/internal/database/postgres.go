@@ -9,7 +9,6 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
-	"github.com/pelletier/go-toml/query"
 	"github.com/pressly/goose/v3"
 )
 
@@ -52,6 +51,24 @@ func (p *PostgresDB) Close() error {
 	return p.db.Close()
 }
 
+func (p *PostgresDB) CreateUser(user *User) (*User, error) {
+	query := `
+		INSERT INTO users (email, password_hash, is_active,
+			is_verified, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6)
+	`
+
+	_, err := p.db.Exec(query,
+		user.Email, user.PasswordHash, user.IsActive,
+		user.IsVerified, user.CreatedAt, user.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return p.GetUserByLogin(user.Email)
+}
+
 func (p *PostgresDB) GetUserByLogin(login string) (*User, error) {
 	query := `
 		SELECT id, email, password_hash, is_active,
@@ -71,6 +88,29 @@ func (p *PostgresDB) GetUserByLogin(login string) (*User, error) {
 	}
 
 	return user, nil
+}
+
+func (p *PostgresDB) UserExists(email string) bool {
+	query := `
+	SELECT EXISTS (SELECT 1 FROM users WHERE email = $1)
+	`
+	var exist bool
+	if err := p.db.QueryRow(query, email).Scan(&exist); err != nil {
+		return true
+	}
+	return exist
+}
+
+func (p *PostgresDB) AssignRoleToUser(id int64, role string) ([]string, error) {
+	var roles []string
+	roleId, err := p.GetRoleByName(role)
+	if err != nil {
+		return nil, err
+	}
+
+
+
+	return roles, nil
 }
 
 func (p *PostgresDB) UpdateLastLogin(id int64) error {
@@ -110,4 +150,15 @@ func (p *PostgresDB) GetUserRoles(id int64) ([]string, error) {
 	}
 
 	return roles, nil
+}
+
+func (p *PostgresDB) SaveRefreshToken(token *RefreshToken) error {
+	query := `
+	INSERT INTO refresh_tokens (token, user_id, expires_at, created_at, revoked_at)
+	VALUES ($1, $2, $3, $3, $5)
+	`
+
+	_, err := p.db.Exec(query, token.Token, token.UserID, token.ExpiresAt, token.CreatedAt, token.RevokedAt)
+
+	return err
 }

@@ -32,6 +32,10 @@ func (s *AuthService) Login(ctx context.Context, req *auth_grpc.LoginRequest) (*
 		return nil, errors.New("invalid credentials")
 	}
 
+	if !user.IsVerified {
+		return nil, errors.New("account is not verified")
+	}
+
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
 		return nil, errors.New("invalid credentials")
 	}
@@ -122,4 +126,7 @@ func (s *AuthService) Register(ctx context.Context, req *auth_grpc.RegisterReque
 			Roles: roles,
 		},
 	}, nil
+}
+
+func (s *AuthService) ValidateToken(ctx context.Context, req *auth_grpc.ValidateTokenRequest) (*auth_grpc.ValidateTokenResponse, error) {
 }

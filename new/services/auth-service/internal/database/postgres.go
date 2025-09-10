@@ -101,16 +101,33 @@ func (p *PostgresDB) UserExists(email string) bool {
 	return exist
 }
 
-func (p *PostgresDB) AssignRoleToUser(id int64, role string) ([]string, error) {
-	var roles []string
-	roleId, err := p.GetRoleByName(role)
+func (p *PostgresDB) GetRoleByName(name string) (*Role, error) {
+	query := `SELECT id, name, description FROM roles WHERE name = $1`
+
+	var role *Role
+	err := p.db.QueryRow(query, name).Scan(
+		&role.ID, &role.Name, &role.Description,
+	)
 	if err != nil {
 		return nil, err
 	}
 
+	return role, nil
+}
 
+func (p *PostgresDB) AssignRoleToUser(id int64, roleName string) ([]string, error) {
+	role, err := p.GetRoleByName(roleName)
+	if err != nil {
+		return nil, err
+	}
 
-	return roles, nil
+	query := `INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)`
+	_, err = p.db.Exec(query, id, role.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return p.GetUserRoles(id)
 }
 
 func (p *PostgresDB) UpdateLastLogin(id int64) error {

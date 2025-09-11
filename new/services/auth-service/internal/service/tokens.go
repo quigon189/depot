@@ -64,8 +64,11 @@ func (s *AuthService) generateRefreshToken(user *database.User) (string, error) 
 }
 
 func (s *AuthService) validateJWT(tokenString string) (*UserClaims, error) {
-	token, err := jwt.Parse(
+	claims := &UserClaims{}
+
+	token, err := jwt.ParseWithClaims(
 		tokenString,
+		claims,
 		func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, errors.New("uncorect signing method")
@@ -74,12 +77,13 @@ func (s *AuthService) validateJWT(tokenString string) (*UserClaims, error) {
 			return []byte(s.jwtSecret), nil
 		},
 	)
-
 	if err != nil {
 		return nil, errors.New("failed to parse token")
 	}
 
-	if claims, ok := token.Claims.(*UserClaims); ok && token.Valid {
-		if !claims.VerifieSx
+	if !token.Valid {
+		return nil, errors.New("token invalid")
 	}
+
+	return claims, nil
 }

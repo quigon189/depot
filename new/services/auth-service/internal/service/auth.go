@@ -121,7 +121,7 @@ func (s *AuthService) Register(ctx context.Context, req *auth_grpc.RegisterReque
 		RefreshToken: refreshToken,
 		ExpiresAt:    time.Now().Add(s.refreshTokenExpiry).Unix(),
 		User: &auth_grpc.User{
-			Id: user.ID,
+			Id:    user.ID,
 			Email: user.Email,
 			Roles: roles,
 		},
@@ -129,4 +129,72 @@ func (s *AuthService) Register(ctx context.Context, req *auth_grpc.RegisterReque
 }
 
 func (s *AuthService) ValidateToken(ctx context.Context, req *auth_grpc.ValidateTokenRequest) (*auth_grpc.ValidateTokenResponse, error) {
+	claims, err := s.validateJWT(req.Token)
+	if err != nil {
+		return &auth_grpc.ValidateTokenResponse{Valid: false}, err
+	}
+
+	user, err := s.db.GetUserByLogin(claims.UserEmail)
+	if err != nil {
+		return &auth_grpc.ValidateTokenResponse{Valid: false}, err
+	}
+
+	roles, err := s.db.GetUserRoles(user.ID)
+	if err != nil {
+		return &auth_grpc.ValidateTokenResponse{Valid: false}, err
+	}
+
+	return &auth_grpc.ValidateTokenResponse{
+		Valid: true,
+		User: &auth_grpc.User{
+			Id:    user.ID,
+			Email: user.Email,
+			Roles: roles,
+		},
+	}, nil
+}
+
+func (s *AuthService) RefreshToken(ctx context.Context, req *auth_grpc.RefreshTokenRequest) (*auth_grpc.RefreshTokenResponse, error) {
+	refreshToken, err := s.db.GetRefreshToken(req.RefreshToken)
+	if err != nil {
+		return nil, errors.New("invalid refresh token")
+	}
+
+	if !refreshToken.RevokedAt.IsZero() {
+		return nil, errors.New("refresh token revoked")
+	}
+
+	if time.Now().After(refreshToken.ExpiresAt) {
+		return nil, errors.New("refresh token expired")
+	}
+
+	user, err := s.db.GetUserByID(refreshToken.UserID)
+	if err != nil || !user.IsActive {
+		return nil, errors.New("user not found or inactive")
+	}
+
+	roles, err := s.db.GetUserRoles(user.ID)
+	if err != nil {
+		return nil, errors.New("failed to get user roles")
+	}
+
+	accessToken, err := s.generateAccessToken(user, roles)
+	if err != nil {
+		return nil, errors.New("failed to generate access token")
+	}
+
+	newRefreshToken, err := s.generateRefreshToken(user)
+	if err != nil {
+		return nil, errors.New("failed to generate refresh token")
+	}
+
+	if err := s.db.RevokeRefreshToken(req.RefreshToken); err != nil {
+		return nil, errors.New("failed to revoke refresh token")
+	}
+
+	return &auth_grpc.RefreshTokenResponse{
+		Token: accessToken,
+		RefreshToken: newRefreshToken,
+		ExpiresAt: time.Now().Add(s.refreshTokenExpiry).Unix(),
+	}, nil
 }

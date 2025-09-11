@@ -74,7 +74,7 @@ func (p *PostgresDB) GetUserByLogin(login string) (*User, error) {
 		SELECT id, email, password_hash, is_active,
 			is_verified, created_at, updated_at, last_login_at
 		FROM users
-		WHERE email = $1 OR username = $1
+		WHERE email = $1
 	`
 
 	user := &User{}
@@ -90,6 +90,26 @@ func (p *PostgresDB) GetUserByLogin(login string) (*User, error) {
 	return user, nil
 }
 
+func (p *PostgresDB) GetUserByID(id int64) (*User, error) {
+	query := `
+		SELECT id, email, password_hash, is_active,
+			is_verified, created_at, updated_at, last_login_at
+		FROM users
+		WHERE id = $1
+	`
+
+	user := &User{}
+	err := p.db.QueryRow(query, id).Scan(
+		&user.ID, &user.Email, &user.PasswordHash, &user.IsActive,
+		&user.IsVerified, &user.CreatedAt, &user.UpdatedAt, &user.LastLoginAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
 func (p *PostgresDB) UserExists(email string) bool {
 	query := `
 	SELECT EXISTS (SELECT 1 FROM users WHERE email = $1)
@@ -104,7 +124,7 @@ func (p *PostgresDB) UserExists(email string) bool {
 func (p *PostgresDB) GetRoleByName(name string) (*Role, error) {
 	query := `SELECT id, name, description FROM roles WHERE name = $1`
 
-	var role *Role
+	role := &Role{}
 	err := p.db.QueryRow(query, name).Scan(
 		&role.ID, &role.Name, &role.Description,
 	)
@@ -176,6 +196,20 @@ func (p *PostgresDB) SaveRefreshToken(token *RefreshToken) error {
 	`
 
 	_, err := p.db.Exec(query, token.Token, token.UserID, token.ExpiresAt, token.CreatedAt, token.RevokedAt)
+
+	return err
+}
+
+func (p *PostgresDB) GetRefreshToken(tokenString string) (*RefreshToken, error) {
+	var refreshToken RefreshToken
+	return &refreshToken, nil
+}
+
+func (p *PostgresDB) RevokeRefreshToken(tokenString string) error {
+	query := `
+		DELETE FROM refresh_tokens WHERE token = $1
+	`
+	_, err := p.db.Exec(query, tokenString)
 
 	return err
 }

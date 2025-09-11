@@ -11,6 +11,7 @@ import (
 )
 
 type AuthService struct {
+	auth_grpc.UnimplementedAuthServiceServer
 	db                 *database.PostgresDB
 	jwtSecret          string
 	accessTokenExpiry  time.Duration

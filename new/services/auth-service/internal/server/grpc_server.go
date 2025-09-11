@@ -32,7 +32,7 @@ func (s *GRPCServer) Start() error {
 
 	auth_grpc.RegisterAuthServiceServer(s.server, s.authService)
 	
-	log.Printf("Starting gRPC server on &s:&s", s.config.Server.Address, s.config.Server.GRPCPort)
+	log.Printf("Starting gRPC server on %s:%s", s.config.Server.Address, s.config.Server.GRPCPort)
 	return s.server.Serve(lis)
 }
 

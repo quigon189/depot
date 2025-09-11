@@ -1,4 +1,5 @@
-CREATE TABLE IF NOT EXISTS users (
+-- +goose Up
+CREATE TABLE users (
 	id SERIAL PRIMARY KEY,
 	email VARCHAR(255) UNIQUE NOT NULL,
 	password_hash VARCHAR(255) NOT NULL,
@@ -9,7 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
 	last_login TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS refresh_tokens (
+CREATE TABLE refresh_tokens (
 	token VARCHAR(255) PRIMARY KEY,
 	user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 	expires_at TIMESTAMP NOT NULL,
@@ -17,13 +18,13 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
 	revoked_at TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS roles (
+CREATE TABLE roles (
 	id SERIAL PRIMARY KEY,
 	name VARCHAR(50) UNIQUE NOT NULL,
 	description TEXT
 );
 
-CREATE TABLE IF NOT EXISTS user_roles (
+CREATE TABLE user_roles (
 	user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 	role_id INTEGER NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
 	UNIQUE(user_id, role_id)

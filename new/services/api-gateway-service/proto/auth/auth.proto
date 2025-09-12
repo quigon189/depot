@@ -24,10 +24,8 @@ message LoginResponse {
 }
 
 message RegisterRequest {
-  string username = 1;
   string password = 2;
   string email = 3;
-  string name = 4;
 }
 
 message RegisterResponse {
@@ -58,8 +56,6 @@ message RefreshTokenResponse {
 
 message User {
   int64 id = 1;
-  string username = 2;
   string email = 3;
-  string name = 4;
   repeated string roles = 6;
 }

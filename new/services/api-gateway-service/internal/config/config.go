@@ -8,8 +8,14 @@ import (
 )
 
 type Config struct {
-	Server  ServerConfig  `yaml:"server"`
-	Logging LoggingConfig `yaml:"logging"`
+	Server      ServerConfig      `yaml:"server"`
+	Logging     LoggingConfig     `yaml:"logging"`
+	GRPCService GRPCServiceConfig `yaml:"grpc_service"`
+}
+
+type GRPCServiceConfig struct {
+	Address string `yaml:"address"`
+	Timeout time.Duration `yaml:"timeout"`
 }
 
 type ServerConfig struct {

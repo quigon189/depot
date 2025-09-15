@@ -10,7 +10,9 @@ import (
 type Config struct {
 	Server      ServerConfig      `yaml:"server"`
 	Logging     LoggingConfig     `yaml:"logging"`
-	GRPCService GRPCServiceConfig `yaml:"grpc_service"`
+	GRPCServices struct{
+		Auth GRPCServiceConfig `yaml:"auth"`
+	} `yaml:"grpc_services"`
 }
 
 type GRPCServiceConfig struct {

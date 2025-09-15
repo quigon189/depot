@@ -13,11 +13,11 @@ import (
 
 type GRPCClient struct {
 	client auth_grpc.AuthServiceClient
-	conn *grpc.ClientConn
+	conn   *grpc.ClientConn
 	config config.GRPCServiceConfig
 }
 
-func NewGRPCClient (cfg config.GRPCServiceConfig) (*GRPCClient, error) {
+func NewGRPCClient(cfg config.GRPCServiceConfig) (*GRPCClient, error) {
 	var opts []grpc.DialOption
 
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -29,11 +29,18 @@ func NewGRPCClient (cfg config.GRPCServiceConfig) (*GRPCClient, error) {
 		return nil, err
 	}
 
+	// ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout)
+	// defer cancel()
+	//
+	// if !conn.WaitForStateChange(ctx, conn.GetState()) {
+	// 	return nil, errors.New("failed to connect to " + cfg.Address)
+	// }
+	//
 	client := auth_grpc.NewAuthServiceClient(conn)
 
 	return &GRPCClient{
 		client: client,
-		conn: conn,
+		conn:   conn,
 		config: cfg,
 	}, err
 }
@@ -86,7 +93,7 @@ func grpcUnaryInterceptor(ctx context.Context, method string, req, reply interfa
 
 func grpcStreamInterceptor(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 	start := time.Now()
-	clientStream, err := streamer(ctx, desc, method, opts...)
+	clientStream, err := streamer(ctx, desc, cc, method, opts...)
 	duration := time.Since(start)
 
 	if err != nil {

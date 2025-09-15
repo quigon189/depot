@@ -8,6 +8,7 @@ import (
 	"net"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 type GRPCServer struct {
@@ -31,6 +32,8 @@ func (s *GRPCServer) Start() error {
 	}
 
 	auth_grpc.RegisterAuthServiceServer(s.server, s.authService)
+	
+	reflection.Register(s.server)
 	
 	log.Printf("Starting gRPC server on %s:%s", s.config.Server.Address, s.config.Server.GRPCPort)
 	return s.server.Serve(lis)

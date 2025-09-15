@@ -31,7 +31,7 @@ func (s *AuthService) generateAccessToken(user *database.User, roles []string) (
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	signedToken, err := token.SignedString(s.jwtSecret)
+	signedToken, err := token.SignedString([]byte(s.jwtSecret))
 	if err != nil {
 		return "", errors.New("failed to generate token: " + err.Error())
 	}

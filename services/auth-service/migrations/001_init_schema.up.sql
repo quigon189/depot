@@ -4,10 +4,10 @@ CREATE TABLE users (
 	email VARCHAR(255) UNIQUE NOT NULL,
 	password_hash VARCHAR(255) NOT NULL,
 	is_active BOOLEAN DEFAULT true,
-	is_verified BOOLEAN DEFAULT false,
+	is_verified BOOLEAN DEFAULT true,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	last_login TIMESTAMP
+	last_login_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE refresh_tokens (

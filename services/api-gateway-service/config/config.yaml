@@ -6,7 +6,7 @@ server:
   idle_timeout: 120s
 
 grpc_services:
-  auth_service:
+  auth:
     address: "127.0.0.1:50051"
     timeout: 30s
 

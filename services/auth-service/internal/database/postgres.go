@@ -192,7 +192,7 @@ func (p *PostgresDB) GetUserRoles(id int64) ([]string, error) {
 func (p *PostgresDB) SaveRefreshToken(token *RefreshToken) error {
 	query := `
 	INSERT INTO refresh_tokens (token, user_id, expires_at, created_at, revoked_at)
-	VALUES ($1, $2, $3, $3, $5)
+	VALUES ($1, $2, $3, $4, $5)
 	`
 
 	_, err := p.db.Exec(query, token.Token, token.UserID, token.ExpiresAt, token.CreatedAt, token.RevokedAt)

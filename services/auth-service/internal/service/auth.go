@@ -4,10 +4,12 @@ import (
 	"auth-service/internal/database"
 	"auth-service/internal/grpc/auth_grpc"
 	"context"
-	"errors"
+	"log"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type AuthService struct {
@@ -30,44 +32,54 @@ func NewAuthService(db *database.PostgresDB, jwtSecret string, atokenExpiry time
 func (s *AuthService) Login(ctx context.Context, req *auth_grpc.LoginRequest) (*auth_grpc.LoginResponse, error) {
 	user, err := s.db.GetUserByLogin(req.Login)
 	if err != nil {
-		return nil, errors.New("invalid credentials")
+		log.Printf("Failed to get user: %v error: invalid email", req.Login)
+		return nil, status.Errorf(codes.Unauthenticated, "invalid credentials")
 	}
 
 	if !user.IsVerified {
-		return nil, errors.New("account is not verified")
+		log.Printf("User not verified: %v", req.Login)
+		return nil, status.Errorf(codes.Unauthenticated, "account is not verified")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
-		return nil, errors.New("invalid credentials")
+		log.Printf("Failed to get user: %v error: invalid password", req.Login)
+		return nil, status.Errorf(codes.Unauthenticated, "invalid credentials")
 	}
 
 	if !user.IsActive {
-		return nil, errors.New("account is deavtivated")
+		log.Printf("User not active: %v", req.Login)
+		return nil, status.Errorf(codes.Unauthenticated, "account is deavtivated")
 	}
 
 	roles, err := s.db.GetUserRoles(user.ID)
 	if err != nil {
-		return nil, errors.New("failed to get user roles")
+		log.Printf("Failed to get user roles: %v error: %v", req.Login, err)
+		return nil, status.Errorf(codes.Internal, "failed to get user roles")
 	}
 
 	accessToken, err := s.generateAccessToken(user, roles)
 	if err != nil {
-		return nil, errors.New("failed to generate token")
+		log.Printf("Failed to generate access token: %v error: %v", req.Login, err)
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
 	refreshToken, err := s.generateRefreshToken(user)
 	if err != nil {
-		return nil, errors.New("failed to generate token")
+		log.Printf("Failed to generate refresh token: %v error: %v", req.Login, err)
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
 	if err := s.db.UpdateLastLogin(user.ID); err != nil {
-		return nil, errors.New("failed to update login time")
+		log.Printf("Failed to update login time: %v error: %v", req.Login, err)
+		return nil, status.Errorf(codes.Internal, "failed to update login time")
 	}
+
+	log.Printf("User logined: %v", user.Email)
 
 	return &auth_grpc.LoginResponse{
 		Token:        accessToken,
 		RefreshToken: refreshToken,
-		ExpiresAt:    int64(s.accessTokenExpiry),
+		ExpiresAt:    time.Now().Add(s.refreshTokenExpiry).Unix(),
 		User: &auth_grpc.User{
 			Id:    user.ID,
 			Email: user.Email,
@@ -78,44 +90,52 @@ func (s *AuthService) Login(ctx context.Context, req *auth_grpc.LoginRequest) (*
 
 func (s *AuthService) Register(ctx context.Context, req *auth_grpc.RegisterRequest) (*auth_grpc.RegisterResponse, error) {
 	if exists := s.db.UserExists(req.Email); exists {
-		return nil, errors.New("user alredy exists")
+		log.Printf("filed to register user: user already exists: %v", req.Email)
+		return nil, status.Errorf(codes.AlreadyExists, "user alredy exists")
 	}
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, errors.New("failed to hash password")
+		log.Printf("failed to hash password with user: %v error: %v", req.Email, err)
+		return nil, status.Errorf(codes.Internal, "failed to hash password")
 	}
 
 	user := &database.User{
 		Email:        req.Email,
 		PasswordHash: string(passwordHash),
 		IsActive:     true,
-		IsVerified:   false,
+		IsVerified:   true,
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
 
 	user, err = s.db.CreateUser(user)
 	if err != nil {
-		return nil, errors.New("failed to create user")
+		log.Printf("failed to create user: %v error: %v", req.Email, err)
+		return nil, status.Errorf(codes.Internal, "failed to create user")
 	}
 
 	role := "user"
 
 	roles, err := s.db.AssignRoleToUser(user.ID, role)
 	if err != nil {
-		return nil, errors.New("failed to assign role")
+		log.Printf("failed to assign role with user: %v, %v error: %v", req.Email, role, err)
+		return nil, status.Errorf(codes.Internal, "failed to assign role")
 	}
 
 	accessToken, err := s.generateAccessToken(user, roles)
 	if err != nil {
-		return nil, errors.New("failed to generate token")
+		log.Printf("failed to generate access token with user: %v error: %v", req.Email, err)
+		return nil, status.Errorf(codes.Internal, "failed to generate access token")
 	}
 
 	refreshToken, err := s.generateRefreshToken(user)
 	if err != nil {
-		return nil, errors.New("failed to generate refresh token")
+		log.Printf("failed to generate refresh token with user: %v error: %v", req.Email, err)
+		return nil, status.Errorf(codes.Internal, "failed to generate refresh token")
 	}
+
+	log.Printf("registred user email: %s with roles %v:", user.Email, roles)
 
 	return &auth_grpc.RegisterResponse{
 		Token:        accessToken,
@@ -132,17 +152,20 @@ func (s *AuthService) Register(ctx context.Context, req *auth_grpc.RegisterReque
 func (s *AuthService) ValidateToken(ctx context.Context, req *auth_grpc.ValidateTokenRequest) (*auth_grpc.ValidateTokenResponse, error) {
 	claims, err := s.validateJWT(req.Token)
 	if err != nil {
-		return &auth_grpc.ValidateTokenResponse{Valid: false}, err
+		log.Printf("Failed to validate jwt: %v error: %v", req.Token, err)
+		return &auth_grpc.ValidateTokenResponse{Valid: false}, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
 	user, err := s.db.GetUserByLogin(claims.UserEmail)
 	if err != nil {
-		return &auth_grpc.ValidateTokenResponse{Valid: false}, err
+		log.Printf("Failed to get user on validation: %v error: %v", claims.UserEmail, err)
+		return &auth_grpc.ValidateTokenResponse{Valid: false}, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
 	roles, err := s.db.GetUserRoles(user.ID)
 	if err != nil {
-		return &auth_grpc.ValidateTokenResponse{Valid: false}, err
+		log.Printf("Failed to get user roles on validation: %v error: %v", claims.UserEmail, err)
+		return &auth_grpc.ValidateTokenResponse{Valid: false}, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
 	return &auth_grpc.ValidateTokenResponse{
@@ -158,44 +181,50 @@ func (s *AuthService) ValidateToken(ctx context.Context, req *auth_grpc.Validate
 func (s *AuthService) RefreshToken(ctx context.Context, req *auth_grpc.RefreshTokenRequest) (*auth_grpc.RefreshTokenResponse, error) {
 	refreshToken, err := s.db.GetRefreshToken(req.RefreshToken)
 	if err != nil {
-		return nil, errors.New("invalid refresh token")
+		log.Printf("Failed validate refresh token: %v error: %v", req.RefreshToken, err)
+		return nil, status.Errorf(codes.Unauthenticated, "failed to validate refresh token")
 	}
 
 	if !refreshToken.RevokedAt.IsZero() {
-		return nil, errors.New("refresh token revoked")
+		return nil, status.Errorf(codes.Unauthenticated, "refresh token revoked")
 	}
 
 	if time.Now().After(refreshToken.ExpiresAt) {
-		return nil, errors.New("refresh token expired")
+		return nil, status.Errorf(codes.Unauthenticated, "refresh token expired")
 	}
 
 	user, err := s.db.GetUserByID(refreshToken.UserID)
 	if err != nil || !user.IsActive {
-		return nil, errors.New("user not found or inactive")
+		log.Printf("Failed to get user on refresh token: %v error: %v", req.RefreshToken, err)
+		return nil, status.Errorf(codes.Unauthenticated, "user not found or inactive")
 	}
 
 	roles, err := s.db.GetUserRoles(user.ID)
 	if err != nil {
-		return nil, errors.New("failed to get user roles")
+		log.Printf("Failed to get user roles on refresh token: %v error: %v", user.Email, err)
+		return nil, status.Errorf(codes.Internal, "failed to get user roles")
 	}
 
 	accessToken, err := s.generateAccessToken(user, roles)
 	if err != nil {
-		return nil, errors.New("failed to generate access token")
+		log.Printf("Failed to generate access token: %v error: %v", user.Email, err)
+		return nil, status.Errorf(codes.Internal, "failed to generate access token")
 	}
 
 	newRefreshToken, err := s.generateRefreshToken(user)
 	if err != nil {
-		return nil, errors.New("failed to generate refresh token")
+		log.Printf("Failed to generate refresh token: %v error: %v", user.Email, err)
+		return nil, status.Errorf(codes.Internal, "failed to generate refresh token")
 	}
 
 	if err := s.db.RevokeRefreshToken(req.RefreshToken); err != nil {
-		return nil, errors.New("failed to revoke refresh token")
+		log.Printf("Failed to revoke refresh token: %v error: %v", user.Email, err)
+		return nil, status.Errorf(codes.Internal, "failed to revoke refresh token")
 	}
 
 	return &auth_grpc.RefreshTokenResponse{
-		Token: accessToken,
+		Token:        accessToken,
 		RefreshToken: newRefreshToken,
-		ExpiresAt: time.Now().Add(s.refreshTokenExpiry).Unix(),
+		ExpiresAt:    time.Now().Add(s.refreshTokenExpiry).Unix(),
 	}, nil
 }

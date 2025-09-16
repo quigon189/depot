@@ -69,7 +69,7 @@ func (s *AuthService) validateJWT(tokenString string) (*UserClaims, error) {
 	token, err := jwt.ParseWithClaims(
 		tokenString,
 		claims,
-		func(token *jwt.Token) (interface{}, error) {
+		func(token *jwt.Token) (any, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, errors.New("uncorect signing method")
 			}

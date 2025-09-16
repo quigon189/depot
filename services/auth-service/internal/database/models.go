@@ -18,7 +18,6 @@ type RefreshToken struct {
 	UserID    int64     `db:"user_id"`
 	ExpiresAt time.Time `db:"expires_at"`
 	CreatedAt time.Time `db:"created_at"`
-	RevokedAt time.Time `db:"revoked_at"`
 }
 
 type Role struct {

@@ -27,12 +27,13 @@ type ServerConfig struct {
 }
 
 type DBConfig struct {
-	Host           string `yaml:"host"`
-	Port           int    `yaml:"port"`
-	User           string `yaml:"user"`
-	Password       string `yaml:"password"`
-	Name           string `yaml:"name"`
-	MigrationsPath string `yaml:"migrations_path"`
+	Host           string        `yaml:"host"`
+	Port           int           `yaml:"port"`
+	User           string        `yaml:"user"`
+	Password       string        `yaml:"password"`
+	Name           string        `yaml:"name"`
+	CleanupTime    time.Duration `yaml:"cleanup_time"`
+	MigrationsPath string        `yaml:"migrations_path"`
 }
 
 type LoggingConfig struct {

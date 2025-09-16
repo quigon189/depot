@@ -1,42 +1,60 @@
 package cleanup
 
 import (
+	"auth-service/internal/database"
 	"context"
-	"database/sql"
 	"log"
 	"sync"
 	"time"
 )
 
 type CleanupService struct {
-	db       *sql.DB
+	db       *database.PostgresDB
 	wg       sync.WaitGroup
 	ctx      context.Context
 	cancel   context.CancelFunc
 	interval time.Duration
 }
 
-func NewCleanupService(db *sql.DB, interval time.Duration) *CleanupService {
+func NewCleanupService(db *database.PostgresDB, interval time.Duration) *CleanupService {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &CleanupService{
-		db: db,
-		ctx: ctx,
-		cancel: cancel,
+		db:       db,
+		ctx:      ctx,
+		cancel:   cancel,
 		interval: interval,
 	}
 }
 
-func (s *CleanupService) DeleteExpiredTokens() error {
-	query := `DELETE FROM refresh_tokens WHERE expires_at < NOW()`
-	result, err := s.db.Exec(query)
-	if err != nil {
-		return err
-	}
+func (s *CleanupService) Start() {
+	s.wg.Add(1)
+	go func() {
+		defer s.wg.Done()
 
-	rowsAffected, _ := result.RowsAffected()
-	if rowsAffected > 0 {
-		log.Printf("Deleted expired tokens: %d", rowsAffected)
-	}
+		ticker := time.NewTicker(s.interval)
+		defer ticker.Stop()
 
-	return nil
-} 
+		log.Println("Cleanup service start")
+
+		if err := s.db.DeleteExpiredTokens(); err != nil {
+			log.Printf("Failed first cleanup: %v", err)
+		}
+
+		for {
+			select {
+			case <-s.ctx.Done():
+				log.Println("Cleanup service stoped")
+				return
+			case <-ticker.C:
+				if err := s.db.DeleteExpiredTokens(); err != nil {
+					log.Printf("Failed cleanup: %v", err)
+				} 
+			}
+		}
+	}()
+}
+
+func (s *CleanupService) Stop() {
+	s.cancel()
+	s.wg.Wait()
+}

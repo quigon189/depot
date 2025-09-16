@@ -51,6 +51,23 @@ func (p *PostgresDB) Close() error {
 	return p.db.Close()
 }
 
+func (p *PostgresDB) DeleteExpiredTokens() error {
+	query := `
+	DELETE FROM refresh_tokens WHERE expires_at < $1
+	`
+	result, err := p.db.Exec(query, time.Now())
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected > 0 {
+		log.Printf("Deleted expired tokens: %d", rowsAffected)
+	}
+
+	return nil
+}
+
 func (p *PostgresDB) CreateUser(user *User) (*User, error) {
 	query := `
 		INSERT INTO users (email, password_hash, is_active,
@@ -191,11 +208,11 @@ func (p *PostgresDB) GetUserRoles(id int64) ([]string, error) {
 
 func (p *PostgresDB) SaveRefreshToken(token *RefreshToken) error {
 	query := `
-	INSERT INTO refresh_tokens (token, user_id, expires_at, created_at, revoked_at)
-	VALUES ($1, $2, $3, $4, $5)
+	INSERT INTO refresh_tokens (token, user_id, expires_at, created_at)
+	VALUES ($1, $2, $3, $4)
 	`
 
-	_, err := p.db.Exec(query, token.Token, token.UserID, token.ExpiresAt, token.CreatedAt, token.RevokedAt)
+	_, err := p.db.Exec(query, token.Token, token.UserID, token.ExpiresAt, token.CreatedAt)
 
 	return err
 }

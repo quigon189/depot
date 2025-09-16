@@ -185,10 +185,6 @@ func (s *AuthService) RefreshToken(ctx context.Context, req *auth_grpc.RefreshTo
 		return nil, status.Errorf(codes.Unauthenticated, "failed to validate refresh token")
 	}
 
-	if !refreshToken.RevokedAt.IsZero() {
-		return nil, status.Errorf(codes.Unauthenticated, "refresh token revoked")
-	}
-
 	if time.Now().After(refreshToken.ExpiresAt) {
 		return nil, status.Errorf(codes.Unauthenticated, "refresh token expired")
 	}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"auth-service/internal/cleanup"
 	"auth-service/internal/config"
 	"auth-service/internal/database"
 	"auth-service/internal/server"
@@ -22,6 +23,10 @@ func main() {
 		log.Fatalf("Failed to connect to DB: %v", err)
 	}
 	defer db.Close()
+
+	cleanupService := cleanup.NewCleanupService(db, cfg.Database.CleanupTime)
+	cleanupService.Start()
+	defer cleanupService.Stop()
 
 	authService := service.NewAuthService(
 		db,

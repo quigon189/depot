@@ -13,8 +13,10 @@ database:
 
 jwt:
   secret: "12345"
-  access_token_expiry: 15m
-  refresh_token_expiry: 168h
+  # access_token_expiry: 15m
+  # refresh_token_expiry: 168h
+  access_token_expiry: 1m
+  refresh_token_expiry: 5m
 
 logging:
   level: "info"

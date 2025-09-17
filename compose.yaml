@@ -7,3 +7,27 @@ services:
       POSTGRES_USER: auth_admin
       POSTGRES_PASSWORD: ghjgecr123
       POSTGRES_DB: auth_db
+    networks:
+      - depot-net
+
+  auth-service:
+    build: ./services/auth-service
+    ports:
+      - "50051:50051"
+    depends_on:
+      - postgres
+    networks:
+      - depot-net
+
+  api-gateway-service:
+    build: ./services/api-gateway-service
+    ports:
+      - "5000:5000"
+    depends_on:
+      - auth-service
+    networks:
+      - depot-net
+
+networks:
+  depot-net:
+    driver: bridge

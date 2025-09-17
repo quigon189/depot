@@ -13,6 +13,8 @@ func SetupAuth(cfg config.GRPCServiceConfig, mux *submux.SubMux) error {
 	authHandler, err := NewAuthHandler(cfg)
 	mux.HandleFunc("/login", authHandler.Login)
 	mux.HandleFunc("/register", authHandler.Register)
+	mux.HandleFunc("/validate", authHandler.Validate)
+	mux.HandleFunc("/refresh", authHandler.Refresh)
 	return err
 }
 
@@ -74,6 +76,56 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "Registration failed", http.StatusUnauthorized)
 		log.Printf("Registration failed response: %v error: %s", resp, err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+
+}
+
+func (h *AuthHandler) Validate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req auth_grpc.ValidateTokenRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		log.Printf("Invalid JSON: %v error: %v", &req, err)
+		return
+	}
+
+	resp, err := h.grpcClient.ValidateToken(r.Context(), &req)
+	if err != nil {
+		log.Printf("Validation failed response: %v error: %s", resp, err.Error())
+		http.Error(w, "Validation failed", http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+
+}
+
+func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req auth_grpc.RefreshTokenRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	resp, err := h.grpcClient.RefreshToken(r.Context(), &req)
+	if err != nil {
+		http.Error(w, "Refresh token failed", http.StatusBadRequest)
 		return
 	}
 

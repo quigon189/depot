@@ -218,8 +218,22 @@ func (p *PostgresDB) SaveRefreshToken(token *RefreshToken) error {
 }
 
 func (p *PostgresDB) GetRefreshToken(tokenString string) (*RefreshToken, error) {
-	var refreshToken RefreshToken
-	return &refreshToken, nil
+	query := `
+		SELECT token, user_id, expires_at, created_at
+		FROM refresh_tokens
+		WHERE token = $1
+	`
+
+	token := &RefreshToken{}
+	err := p.db.QueryRow(query, tokenString).Scan(
+		&token.Token, &token.UserID, &token.ExpiresAt, &token.CreatedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return token, nil
 }
 
 func (p *PostgresDB) RevokeRefreshToken(tokenString string) error {

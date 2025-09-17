@@ -153,7 +153,10 @@ func (s *AuthService) ValidateToken(ctx context.Context, req *auth_grpc.Validate
 	claims, err := s.validateJWT(req.Token)
 	if err != nil {
 		log.Printf("Failed to validate jwt: %v error: %v", req.Token, err)
-		return &auth_grpc.ValidateTokenResponse{Valid: false}, status.Errorf(codes.InvalidArgument, err.Error())
+		return &auth_grpc.ValidateTokenResponse{
+			Valid: false,
+			User: &auth_grpc.User{},
+		}, nil
 	}
 
 	user, err := s.db.GetUserByLogin(claims.UserEmail)
@@ -186,6 +189,7 @@ func (s *AuthService) RefreshToken(ctx context.Context, req *auth_grpc.RefreshTo
 	}
 
 	if time.Now().After(refreshToken.ExpiresAt) {
+		log.Printf("Refresh token expired: %v", req.RefreshToken)
 		return nil, status.Errorf(codes.Unauthenticated, "refresh token expired")
 	}
 

@@ -1,4 +1,25 @@
 services:
+  # loki:
+  #   image: docker.io/grafana/loki:latest
+  #   ports:
+  #     - "3100:3100"
+  #   volumes:
+  #     - ./configs/loki-configs.yaml:/etc/loki/loki.yaml
+  #   command: -config.file=/etc/loki/loki.yaml
+  #
+  # promtail:
+  #   image: docker.io/grafana/promtail:latest
+  #   volumes:
+  #     - ./configs/promtail-configs.yaml:/etc/promtail/promtail.yaml
+  #     - ./logs:/logs
+  #   command: -config.file=/etc/promtail/promtail.yaml
+  #
+  # grafana:
+  #   image: docker.io/grafana/grafana:latest
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - GF_SECURITY_ADMIN_PASSWORD=ghjgecr123
   postgres:
     image: docker.io/library/postgres
     ports:
@@ -7,6 +28,17 @@ services:
       POSTGRES_USER: auth_admin
       POSTGRES_PASSWORD: ghjgecr123
       POSTGRES_DB: auth_db
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    logging:
+      driver: "json-file"
+      options:
+        path: ./logs/postgres.log
     networks:
       - depot-net
 
@@ -14,8 +46,15 @@ services:
     build: ./services/auth-service
     ports:
       - "50051:50051"
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        path: ./logs/auth-service.log
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+        restart: true
     networks:
       - depot-net
 
@@ -23,10 +62,16 @@ services:
     build: ./services/api-gateway-service
     ports:
       - "5000:5000"
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        path: ./logs/api-gateway-service.log
     depends_on:
       - auth-service
     networks:
       - depot-net
+
 
 networks:
   depot-net:
